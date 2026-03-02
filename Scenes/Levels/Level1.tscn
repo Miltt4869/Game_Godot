@@ -1,0 +1,204 @@
+[gd_scene format=3 uid="uid://level1001"]
+
+[ext_resource type="Script" uid="uid://362axwqvv1fo" path="res://Scripts/Levels/LevelManager.cs" id="1"]
+[ext_resource type="PackedScene" uid="uid://hud001" path="res://Scenes/UI/HUD.tscn" id="2"]
+[ext_resource type="Script" uid="uid://bpcywyv86ay6f" path="res://Scripts/Utils/AutoCollision.cs" id="3"]
+[ext_resource type="Script" uid="uid://b6k4imcvq4u5j" path="res://Scripts/Utils/FollowCamera.cs" id="4"]
+[ext_resource type="PackedScene" uid="uid://player001" path="res://Scenes/Player/Player.tscn" id="5"]
+[ext_resource type="PackedScene" uid="uid://snake001" path="res://Scenes/Enemies/Snake.tscn" id="6"]
+[ext_resource type="PackedScene" uid="uid://princess001" path="res://Scenes/NPCs/Princess.tscn" id="7"]
+
+[node name="Level1" type="Node2D" unique_id=1618301646]
+position = Vector2(36, 60)
+script = ExtResource("1")
+PlayerScene = ExtResource("5")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=2090388198]
+position = Vector2(576, 324)
+script = ExtResource("4")
+
+[node name="Sky" type="ColorRect" parent="." unique_id=1123567029]
+z_index = -10
+offset_right = 3000.0
+offset_bottom = 400.0
+color = Color(0.4, 0.65, 0.9, 1)
+
+[node name="Clouds1" type="ColorRect" parent="." unique_id=610140016]
+z_index = -9
+offset_left = 200.0
+offset_top = 60.0
+offset_right = 350.0
+offset_bottom = 90.0
+color = Color(0.95, 0.95, 1, 0.7)
+
+[node name="Clouds2" type="ColorRect" parent="." unique_id=1717338647]
+z_index = -9
+offset_left = 600.0
+offset_top = 100.0
+offset_right = 720.0
+offset_bottom = 125.0
+color = Color(0.95, 0.95, 1, 0.6)
+
+[node name="Clouds3" type="ColorRect" parent="." unique_id=408623505]
+z_index = -9
+offset_left = 1100.0
+offset_top = 45.0
+offset_right = 1280.0
+offset_bottom = 80.0
+color = Color(0.95, 0.95, 1, 0.5)
+
+[node name="TreesBG" type="ColorRect" parent="." unique_id=1060305234]
+z_index = -5
+offset_top = 300.0
+offset_right = 3000.0
+offset_bottom = 580.0
+color = Color(0.15, 0.3, 0.12, 1)
+
+[node name="Tree1" type="ColorRect" parent="." unique_id=219387979]
+z_index = -4
+offset_left = 300.0
+offset_top = 250.0
+offset_right = 340.0
+offset_bottom = 580.0
+color = Color(0.35, 0.2, 0.1, 1)
+
+[node name="TreeTop1" type="ColorRect" parent="." unique_id=561740568]
+z_index = -4
+offset_left = 270.0
+offset_top = 200.0
+offset_right = 370.0
+offset_bottom = 300.0
+color = Color(0.2, 0.45, 0.15, 1)
+
+[node name="Tree2" type="ColorRect" parent="." unique_id=1020467673]
+z_index = -4
+offset_left = 700.0
+offset_top = 230.0
+offset_right = 740.0
+offset_bottom = 580.0
+color = Color(0.35, 0.2, 0.1, 1)
+
+[node name="TreeTop2" type="ColorRect" parent="." unique_id=1528124769]
+z_index = -4
+offset_left = 660.0
+offset_top = 160.0
+offset_right = 780.0
+offset_bottom = 280.0
+color = Color(0.18, 0.42, 0.13, 1)
+
+[node name="Bush1" type="ColorRect" parent="." unique_id=1305911227]
+z_index = -3
+offset_left = 450.0
+offset_top = 540.0
+offset_right = 530.0
+offset_bottom = 580.0
+color = Color(0.2, 0.5, 0.15, 1)
+
+[node name="Bush2" type="ColorRect" parent="." unique_id=1354631225]
+z_index = -3
+offset_left = 1000.0
+offset_top = 545.0
+offset_right = 1070.0
+offset_bottom = 580.0
+color = Color(0.18, 0.48, 0.12, 1)
+
+[node name="Ground" type="StaticBody2D" parent="." unique_id=756541241]
+position = Vector2(1500, 590)
+collision_layer = 2
+script = ExtResource("3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=127701339]
+
+[node name="GroundSprite" type="ColorRect" parent="Ground" unique_id=928978607]
+offset_left = -1600.0
+offset_top = -10.0
+offset_right = 1600.0
+offset_bottom = 80.0
+color = Color(0.35, 0.25, 0.15, 1)
+
+[node name="GrassTop" type="ColorRect" parent="Ground" unique_id=1779627327]
+offset_left = -1600.0
+offset_top = -14.0
+offset_right = 1600.0
+offset_bottom = -10.0
+color = Color(0.2, 0.55, 0.15, 1)
+
+[node name="Platform1" type="StaticBody2D" parent="." unique_id=2097011558]
+position = Vector2(500, 460)
+collision_layer = 2
+script = ExtResource("3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1" unique_id=870092312]
+
+[node name="Sprite" type="ColorRect" parent="Platform1" unique_id=1912098021]
+offset_left = -75.0
+offset_top = -8.0
+offset_right = 75.0
+offset_bottom = 8.0
+color = Color(0.45, 0.35, 0.2, 1)
+
+[node name="Moss1" type="ColorRect" parent="Platform1" unique_id=669871943]
+offset_left = -75.0
+offset_top = -11.0
+offset_right = 75.0
+offset_bottom = -8.0
+color = Color(0.2, 0.5, 0.15, 1)
+
+[node name="Platform2" type="StaticBody2D" parent="." unique_id=1294989070]
+position = Vector2(850, 390)
+collision_layer = 2
+script = ExtResource("3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2" unique_id=366178935]
+
+[node name="Sprite" type="ColorRect" parent="Platform2" unique_id=989395435]
+offset_left = -65.0
+offset_top = -8.0
+offset_right = 65.0
+offset_bottom = 8.0
+color = Color(0.45, 0.35, 0.2, 1)
+
+[node name="Moss2" type="ColorRect" parent="Platform2" unique_id=71235479]
+offset_left = -65.0
+offset_top = -11.0
+offset_right = 65.0
+offset_bottom = -8.0
+color = Color(0.2, 0.5, 0.15, 1)
+
+[node name="Platform3" type="StaticBody2D" parent="." unique_id=908950764]
+position = Vector2(1200, 440)
+collision_layer = 2
+script = ExtResource("3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform3" unique_id=1880719283]
+
+[node name="Sprite" type="ColorRect" parent="Platform3" unique_id=329209918]
+offset_left = -80.0
+offset_top = -8.0
+offset_right = 80.0
+offset_bottom = 8.0
+color = Color(0.45, 0.35, 0.2, 1)
+
+[node name="Moss3" type="ColorRect" parent="Platform3" unique_id=2078998294]
+offset_left = -80.0
+offset_top = -11.0
+offset_right = 80.0
+offset_bottom = -8.0
+color = Color(0.2, 0.5, 0.15, 1)
+
+[node name="SpawnPoint" type="Marker2D" parent="." unique_id=657542806]
+position = Vector2(102, 567)
+
+[node name="Snake1" parent="." unique_id=1172096666 instance=ExtResource("6")]
+position = Vector2(601, 574)
+
+[node name="Snake2" parent="." unique_id=31016339 instance=ExtResource("6")]
+position = Vector2(1004, 573)
+
+[node name="Snake3" parent="." unique_id=127390549 instance=ExtResource("6")]
+position = Vector2(1500, 570)
+
+[node name="Princess" parent="." unique_id=1094412096 instance=ExtResource("7")]
+position = Vector2(2501, 576)
+
+[node name="HUD" parent="." unique_id=320054180 instance=ExtResource("2")]

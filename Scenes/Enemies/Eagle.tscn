@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3 uid="uid://eagle001"]
+
+[ext_resource type="Script" path="res://Scripts/Enemies/Eagle.cs" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(65, 45)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_detect"]
+radius = 350.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hit"]
+size = Vector2(50, 40)
+
+[node name="Eagle" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -22)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -25)
+scale = Vector2(0.25, 0.25)
+
+[node name="DetectArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DetectArea"]
+shape = SubResource("CircleShape2D_detect")
+
+[node name="HitArea" type="Area2D" parent="."]
+position = Vector2(35, -18)
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HitArea"]
+shape = SubResource("RectangleShape2D_hit")
