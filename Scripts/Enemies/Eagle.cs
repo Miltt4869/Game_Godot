@@ -57,6 +57,12 @@ public partial class Eagle : BaseEnemy
         switch (CurrentState)
         {
             case EnemyState.Patrol:
+                if (TargetPlayer != null && !TargetPlayer.IsQueuedForDeletion())
+                {
+                    CurrentState = EnemyState.Chase;
+                    break;
+                }
+
                 // Horizontal patrol
                 velocity.X = PatrolDirection * MoveSpeed;
 
@@ -88,34 +94,40 @@ public partial class Eagle : BaseEnemy
                     velocity.X = PatrolDirection * MoveSpeed;
                 }
 
-                AnimSprite.FlipH = PatrolDirection < 0;
+                SetFacingDirection(PatrolDirection < 0);
                 AnimSprite.Play("walk");
                 break;
 
             case EnemyState.Chase:
                 if (TargetPlayer != null && !TargetPlayer.IsQueuedForDeletion())
                 {
-                    // Hover above the player
-                    Vector2 hoverPos = TargetPlayer.GlobalPosition + new Vector2(0, -FlyHeight);
+                    // Khi đang chờ cooldown thì lượn cao, chuẩn bị đánh thì là đà sà xuống
+                    float chaseHeight = CanAttackPlayer ? 80.0f : 160.0f; 
+                    
+                    // Thêm dao động ngang để nó lượn lờ vòng quanh trên đầu, tránh đậu yên tĩnh
+                    float offsetX = Mathf.Sin(_floatTimer * 3.0f) * 100.0f;
+
+                    Vector2 hoverPos = TargetPlayer.GlobalPosition + new Vector2(offsetX, -chaseHeight);
                     Vector2 dirToHover = (hoverPos - GlobalPosition).Normalized();
 
-                    // Move towards hover position
-                    velocity = dirToHover * MoveSpeed * 1.5f;
+                    // Di chuyển mượt tới điểm lượn
+                    velocity = dirToHover * MoveSpeed * (CanAttackPlayer ? 2.5f : 1.2f); // Áp sát gắt hơn khi đã sẵn sàng đánh
 
-                    // Add floating motion
+                    // Lượn phập phồng
                     velocity.Y += Mathf.Sin(_floatTimer * FloatFrequency) * FloatAmplitude;
 
                     float distX = Math.Abs(GlobalPosition.X - TargetPlayer.GlobalPosition.X);
                     if (distX > 5.0f)
                     {
-                        AnimSprite.FlipH = (TargetPlayer.GlobalPosition.X - GlobalPosition.X) < 0;
+                        SetFacingDirection((TargetPlayer.GlobalPosition.X - GlobalPosition.X) < 0);
                     }
 
-                    // Start dive if horizontally close
-                    if (distX <= AttackRange && CanAttackPlayer)
+                    // Tấn công lao xuống nếu đủ gần và đang ở trên cao nhìn xuống
+                    if (distX <= AttackRange + 20 && CanAttackPlayer && GlobalPosition.Y < TargetPlayer.GlobalPosition.Y - 30)
                     {
                         CurrentState = EnemyState.Attack;
                         _isDiving = true;
+                        CreateAttackVFX();
                     }
                 }
                 else
@@ -135,49 +147,31 @@ public partial class Eagle : BaseEnemy
                     
                     float distX = Math.Abs(GlobalPosition.X - TargetPlayer.GlobalPosition.X);
                     if (distX > 5.0f) 
-                        AnimSprite.FlipH = diveDir.X < 0;
+                        SetFacingDirection(diveDir.X < 0);
 
-                    // If eagle has reached player's height or lower, pull up
+                    // If eagle has reached player's height or lower, pull up immediately
                     if (GlobalPosition.Y >= TargetPlayer.GlobalPosition.Y - 20 || IsOnFloor())
                     {
                         _isDiving = false;
                         CanAttackPlayer = false;
                         AttackCooldownTimer.Start();
+                        
+                        // Không bay tuốt lên trời để tẩu thoát nữa, quay lại vòng lặp Chase áp sát ngay!
+                        CurrentState = EnemyState.Chase;
                     }
                 }
                 else
                 {
-                    // Fly upwards to escape
-                    Vector2 targetPos = TargetPlayer != null ? TargetPlayer.GlobalPosition : GlobalPosition;
-                    Vector2 escapePos = targetPos + new Vector2(0, -FlyHeight - 50);
-                    Vector2 escapeDir = (escapePos - GlobalPosition).Normalized();
-
-                    velocity = escapeDir * DiveSpeed * 0.8f;
-                    AnimSprite.Play("walk");
-
-                    // Nhìn về phía người chơi ngay cả khi đang rút lui bay lên
-                    if (TargetPlayer != null)
-                    {
-                        float distX = Math.Abs(GlobalPosition.X - TargetPlayer.GlobalPosition.X);
-                        if (distX > 5.0f) 
-                            AnimSprite.FlipH = (TargetPlayer.GlobalPosition.X - GlobalPosition.X) < 0;
-                    }
-
-                    // Once high enough, go back to Chase
-                    if (TargetPlayer != null && GlobalPosition.Y <= targetPos.Y - FlyHeight + 20)
-                    {
-                        CurrentState = EnemyState.Chase;
-                    }
-                    else if (TargetPlayer == null && GlobalPosition.Y <= _baseY)
-                    {
-                        CurrentState = EnemyState.Patrol;
-                    }
+                    // Nếu kẹt state tấn công thì tự sửa lỗi quay về chase
+                    CurrentState = EnemyState.Chase;
                 }
                 break;
 
             case EnemyState.Hurt:
+                // Rơi nhẹ do mất trọng tâm khi bị chém, thay vì đứng im lơ lửng
                 velocity.X = 0;
-                velocity.Y = (_baseY - GlobalPosition.Y) * 2.0f;
+                velocity.Y = 50f; 
+                _isDiving = false; 
                 AnimSprite.Play("hurt");
                 break;
 

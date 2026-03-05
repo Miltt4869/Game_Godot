@@ -11,8 +11,8 @@ public partial class TreasureChest : Area2D
     private bool _isOpened = false;
 
     // Các thành phần đồ họa để làm hiệu ứng
-    private ColorRect _portal;
-    private ColorRect _keySprite;
+    private Node2D _portal;
+    private Node2D _keyVisual;
 
     public override void _Ready()
     {
@@ -38,17 +38,37 @@ public partial class TreasureChest : Area2D
 
     private void CreatePlaceholderSprites()
     {
-        // Rương đóng (vàng đậm)
-        var chestClosed = SpriteHelper.CreateColoredRect(40, 30, new Color(0.6f, 0.4f, 0.1f));
-        // Rương mở (vàng sáng chói)
-        var chestOpened = SpriteHelper.CreateColoredRect(40, 30, new Color(0.9f, 0.8f, 0.2f));
+        // Load hình ảnh cực xịn từ thư mục
+        Texture2D chestClosed = GD.Load<Texture2D>("res://Assets/Sprites/Environment/treasure_chest_closed.png");
+        Texture2D chestOpened = GD.Load<Texture2D>("res://Assets/Sprites/Environment/treasure_chest_open.png");
 
-        var animations = new Dictionary<string, Texture2D[]>
+        if (chestClosed != null && chestOpened != null)
         {
-            { "idle", new Texture2D[] { chestClosed } },
-            { "rescued", new Texture2D[] { chestOpened } }
-        };
-        _animSprite.SpriteFrames = SpriteHelper.BuildSpriteFrames(animations);
+            var animations = new Dictionary<string, Texture2D[]>
+            {
+                { "idle", new Texture2D[] { chestClosed } },
+                { "rescued", new Texture2D[] { chestOpened } }
+            };
+            _animSprite.SpriteFrames = SpriteHelper.BuildSpriteFrames(animations);
+            
+            // Chỉnh Scale nhỏ lại vì hình tải trên mạng độ phân giải cao, tăng lên theo yêu cầu
+            _animSprite.Scale = new Vector2(0.12f, 0.12f); 
+            _animSprite.Position = new Godot.Vector2(0, -40); // Đẩy nhẹ lên trên vì rương to ra
+        }
+        else
+        {
+            // Fallback nếu ảnh lỗi
+            var chestC = SpriteHelper.CreateColoredRect(40, 30, new Color(0.6f, 0.4f, 0.1f));
+            var chestO = SpriteHelper.CreateColoredRect(40, 30, new Color(0.9f, 0.8f, 0.2f));
+
+            var animations = new Dictionary<string, Texture2D[]>
+            {
+                { "idle", new Texture2D[] { chestC } },
+                { "rescued", new Texture2D[] { chestO } }
+            };
+            _animSprite.SpriteFrames = SpriteHelper.BuildSpriteFrames(animations);
+        }
+        
         _animSprite.Play("idle");
     }
 
@@ -76,57 +96,181 @@ public partial class TreasureChest : Area2D
     private void OpenChest(Player player)
     {
         _isOpened = true;
-        _animSprite.Play("rescued");
         
-        GameManager.Instance.AddScore(500);
+        // Hiệu ứng rung lắc rương dữ dội trước khi mở
+        var shakeTw = CreateTween();
+        for(int i=0; i<5; i++) {
+            shakeTw.TweenProperty(_animSprite, "position", new Godot.Vector2(5, 0), 0.05f);
+            shakeTw.TweenProperty(_animSprite, "position", new Godot.Vector2(-5, 0), 0.05f);
+        }
+        shakeTw.TweenProperty(_animSprite, "position", new Godot.Vector2(0, 0), 0.05f);
+        
+        // Lóe sáng chói lóa rồi chuyển sang frame Mở
+        shakeTw.TweenProperty(_animSprite, "modulate", new Godot.Color(5f, 5f, 5f, 1f), 0.1f);
+        shakeTw.TweenCallback(Godot.Callable.From(() => {
+            _animSprite.Play("rescued");
+            _animSprite.Modulate = Godot.Colors.White;
+            
+            GameManager.Instance.AddScore(500);
 
-        // 1. Sinh ra Chìa khóa nảy lên xíu
-        _keySprite = new ColorRect();
-        _keySprite.Color = Colors.Gold; // Chìa khóa vàng
-        _keySprite.Size = new Vector2(10, 20);
-        _keySprite.Position = new Vector2(-5, -30); // Giữa rương
-        AddChild(_keySprite);
+            // Bùng nổ hạt bụi vàng
+            var chestParticles = new Godot.CpuParticles2D();
+            chestParticles.Position = new Godot.Vector2(0, -15);
+            chestParticles.Amount = 50;
+            chestParticles.Lifetime = 1.0f;
+            chestParticles.OneShot = true;
+            chestParticles.Explosiveness = 0.9f;
+            chestParticles.EmissionShape = Godot.CpuParticles2D.EmissionShapeEnum.Rectangle;
+            chestParticles.EmissionRectExtents = new Godot.Vector2(20, 10);
+            chestParticles.Direction = new Godot.Vector2(0, -1);
+            chestParticles.Gravity = new Godot.Vector2(0, 150);
+            chestParticles.InitialVelocityMin = 80f;
+            chestParticles.InitialVelocityMax = 150f;
+            chestParticles.Color = Godot.Colors.Gold;
+            AddChild(chestParticles);
+            chestParticles.Emitting = true;
+        }));
+
+        // 1. Sinh ra Chìa khóa vàng lấp lánh (Tương tự hình ảnh xịn)
+        _keyVisual = new Node2D();
+        _keyVisual.Position = new Vector2(0, -20);
+        AddChild(_keyVisual);
+
+        // Hình dạng bề ngoài của chìa
+        var keyRect = new ColorRect();
+        keyRect.Color = Colors.Yellow;
+        keyRect.Size = new Vector2(8, 20);
+        keyRect.Position = new Vector2(-4, -10);
+        _keyVisual.AddChild(keyRect);
+        
+        var keyHead = new ColorRect();
+        keyHead.Color = Colors.Yellow;
+        keyHead.Size = new Vector2(16, 10);
+        keyHead.Position = new Vector2(-8, -14);
+        _keyVisual.AddChild(keyHead);
+
+        // Chìa khóa phát sáng (Particles)
+        var keyGlow = new CpuParticles2D();
+        keyGlow.Amount = 15;
+        keyGlow.Lifetime = 0.5f;
+        keyGlow.EmissionShape = CpuParticles2D.EmissionShapeEnum.Sphere;
+        keyGlow.EmissionSphereRadius = 15f;
+        keyGlow.Gravity = new Vector2(0, -20);
+        keyGlow.Color = new Color(1f, 1f, 0.5f, 0.8f);
+        _keyVisual.AddChild(keyGlow);
 
         var tween = CreateTween();
-        // Nhảy lên mượt mà
-        tween.TweenProperty(_keySprite, "position:y", -70f, 0.5f).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
-        tween.TweenInterval(0.5f);
-        // Biến mất
-        tween.TweenProperty(_keySprite, "modulate:a", 0.0f, 0.5f);
+        // Nhảy lên mượt mà và xoay vòng
+        tween.SetParallel(true);
+        tween.TweenProperty(_keyVisual, "position:y", -80f, 0.6f).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+        tween.TweenProperty(_keyVisual, "rotation", Mathf.Pi * 4, 0.6f); // Xoay vòng
+
+        // Hết nảy lên -> bay vào người nhân vật
+        var seqTween = CreateTween();
+        seqTween.TweenInterval(0.6f);
+        seqTween.TweenCallback(Callable.From(() => {
+            var flyTween = CreateTween();
+            flyTween.SetParallel(true);
+            flyTween.TweenProperty(_keyVisual, "global_position", player.GlobalPosition, 0.4f).SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.In);
+            flyTween.TweenProperty(_keyVisual, "scale", new Vector2(0.2f, 0.2f), 0.4f);
+            
+            flyTween.Chain().TweenCallback(Callable.From(() => {
+                _keyVisual.QueueFree();
+                GameManager.Instance.TotalKeys++;
+                GD.Print("Đã nhặt 1 chìa khóa! Tổng chìa: " + GameManager.Instance.TotalKeys);
+                
+                // Mở cổng vĩ đại
+                CreateEpicPortal(player);
+            }));
+        }));
+    }
+
+    private void CreateEpicPortal(Player player)
+    {
+        _portal = new Godot.Node2D();
+        _portal.Position = new Godot.Vector2(60, -50); // Mở bên phải rương
+        AddChild(_portal);
+
+        // Vòng xoáy ma thuật rực rỡ sử dụng Shader xịn mình vừa code
+        var vortex = new Godot.ColorRect();
+        vortex.Size = new Godot.Vector2(120, 180);
+        vortex.Position = new Godot.Vector2(-60, -90);
+        vortex.PivotOffset = new Godot.Vector2(60, 90);
         
-        // 2. Mở Cổng Không Gian Huyền Ảo bên cạnh rương
-        tween.TweenCallback(Callable.From(() => {
-            _portal = new ColorRect();
-            _portal.Color = new Color(0.5f, 0.1f, 0.8f, 0f); // Tím ma thuật, ban đầu trong suốt
-            _portal.Size = new Vector2(60, 100);
-            _portal.Position = new Vector2(50, -100); // Mở bên phải rương
-            
-            // Xoay tâm giữa
-            _portal.PivotOffset = new Vector2(30, 50);
-            AddChild(_portal);
+        // Load và Áp dụng Shader
+        var shader = Godot.GD.Load<Godot.Shader>("res://Assets/Shaders/epic_portal.gdshader");
+        if (shader != null)
+        {
+            var mat = new Godot.ShaderMaterial();
+            mat.Shader = shader;
+            // Phối màu tím huyền ảo và xanh lóa
+            mat.SetShaderParameter("portal_color_1", new Godot.Color(0.4f, 0.0f, 0.8f, 1.0f)); 
+            mat.SetShaderParameter("portal_color_2", new Godot.Color(0.0f, 0.8f, 1.0f, 1.0f));
+            vortex.Material = mat;
+        }
+        else
+        {
+            vortex.Color = new Godot.Color(0.4f, 0.1f, 0.9f, 0f); // Xấu xí fallback
+        }
+        
+        vortex.Modulate = new Godot.Color(1, 1, 1, 0); // Ban đầu tàng hình
+        _portal.AddChild(vortex);
 
-            var portalTween = CreateTween();
-            portalTween.SetParallel(true);
-            portalTween.TweenProperty(_portal, "modulate:a", 1.0f, 1.0f);
-            
-            // Hiệu ứng phập phồng ánh sáng
-            var pulseTween = CreateTween().SetLoops();
-            pulseTween.TweenProperty(_portal, "scale", new Vector2(1.1f, 1.1f), 0.5f);
-            pulseTween.TweenProperty(_portal, "scale", new Vector2(0.9f, 0.9f), 0.5f);
+        // Lực hút từ tâm (sucking particles)
+        var portalParticles = new Godot.CpuParticles2D();
+        portalParticles.Amount = 80;
+        portalParticles.Lifetime = 1.2f;
+        portalParticles.EmissionShape = Godot.CpuParticles2D.EmissionShapeEnum.Sphere;
+        portalParticles.EmissionSphereRadius = 100f;
+        portalParticles.Gravity = new Godot.Vector2(0, 0);
+        portalParticles.RadialAccelMin = -250f; // Hút cực mạnh vào lõi
+        portalParticles.RadialAccelMax = -150f;
+        portalParticles.ScaleAmountMin = 2f;
+        portalParticles.ScaleAmountMax = 5f;
+        portalParticles.Color = new Godot.Color(0.8f, 0.3f, 1f, 0.8f);
+        _portal.AddChild(portalParticles);
 
-            // 3. Ép Nhân Vật tự đi vào cổng
-            var walkTween = CreateTween();
-            walkTween.TweenInterval(1.0f); // Đợi cổng mở đàng hoàng
-            walkTween.TweenCallback(Callable.From(() => {
-                // Tận dụng hàm đi vào hang có sẵn của Thạch Sanh (1.0f là đi bộ quay mặt qua phải vào cổng)
-                player.WalkIntoCave(1.0f); 
-            }));
+        // Sao bay lên
+        var starParticles = new Godot.CpuParticles2D();
+        starParticles.Amount = 30;
+        starParticles.Lifetime = 2.0f;
+        starParticles.EmissionShape = Godot.CpuParticles2D.EmissionShapeEnum.Point;
+        starParticles.Gravity = new Godot.Vector2(0, -60);
+        starParticles.InitialVelocityMin = 50f;
+        starParticles.InitialVelocityMax = 120f;
+        starParticles.ScaleAmountMin = 1.5f;
+        starParticles.ScaleAmountMax = 3f;
+        starParticles.Color = Godot.Colors.Cyan;
+        _portal.AddChild(starParticles);
+
+        var portalTween = CreateTween().SetParallel(true);
+        // Fade in cổng từ từ
+        portalTween.TweenProperty(vortex, "modulate:a", 1.0f, 1.5f).SetTrans(Tween.TransitionType.Cubic);
+        // Cổng nở bật ra
+        vortex.Scale = new Godot.Vector2(0.1f, 0.1f);
+        portalTween.TweenProperty(vortex, "scale", new Godot.Vector2(1.2f, 1.2f), 1.5f).SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+        
+        // Vòng xoáy nhấp nhô tuần hoàn sau khi mở xong
+        var pulseTween = CreateTween().SetLoops();
+        pulseTween.TweenInterval(1.5f);
+        pulseTween.TweenProperty(vortex, "scale", new Godot.Vector2(1.3f, 1.3f), 0.8f);
+        pulseTween.TweenProperty(vortex, "scale", new Godot.Vector2(1.1f, 1.1f), 0.8f);
+
+        // Ép Nhân Vật tự đi vào cổng
+        var sequence = CreateTween();
+        sequence.TweenInterval(2.5f); // Đợi cổng mở full sức mạnh
+        sequence.TweenCallback(Godot.Callable.From(() => {
+            player.WalkIntoCave(1.5f); // Đi bộ về phía cổng
             
-            // 4. Qua màn sau 2 giây hút vào
-            walkTween.TweenInterval(2.0f);
-            walkTween.TweenCallback(Callable.From(() => {
-                GameManager.Instance.NextLevel();
-            }));
+            // Ép Thạch Sanh mờ dần và thu nhỏ lại (Bị hút vào không gian khác)
+            var hútTween = CreateTween().SetParallel(true);
+            hútTween.TweenProperty(player, "scale", new Godot.Vector2(0.2f, 0.2f), 1.2f).SetTrans(Tween.TransitionType.Circ).SetEase(Tween.EaseType.In);
+            hútTween.TweenProperty(player, "modulate:a", 0.0f, 1.2f);
+        }));
+        
+        sequence.TweenInterval(2.0f);
+        sequence.TweenCallback(Godot.Callable.From(() => {
+            GameManager.Instance.NextLevel();
         }));
     }
 }

@@ -20,6 +20,12 @@ public partial class FollowCamera : Camera2D
         // Make this the current camera
         MakeCurrent();
         AddToGroup("MainCamera");
+
+        // Khóa hẳn giới hạn hiển thị của Camera để không quay lố ra vùng không có Map (màu xám)
+        LimitLeft = (int)MinX;
+        LimitRight = (int)MaxX;
+        LimitTop = (int)MinY;
+        LimitBottom = (int)MaxY;
     }
 
     public override void _Process(double delta)

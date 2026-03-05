@@ -14,6 +14,7 @@ public partial class GameManager : Node
     public bool IsGameOver { get; set; } = false;
     public bool IsPaused { get; set; } = false;
     public bool HasBossKey { get; set; } = false;
+    public int TotalKeys { get; set; } = 0;
 
     // Transition UI
     private CanvasLayer _transitionLayer;

@@ -206,7 +206,7 @@ public partial class BaseEnemy : CharacterBody2D
                     velocity.X = PatrolDirection * MoveSpeed;
                 }
 
-                AnimSprite.FlipH = PatrolDirection < 0;
+                SetFacingDirection(PatrolDirection < 0);
                 AnimSprite.Play("walk");
                 break;
 
@@ -220,7 +220,7 @@ public partial class BaseEnemy : CharacterBody2D
                     // Chỉ lật mặt nếu khoảng cách an toàn (tránh jitter 60 nhịp/giây khi rúc vào nhau)
                     if (distX > 5.0f) 
                     {
-                        AnimSprite.FlipH = dirToPlayer < 0;
+                        SetFacingDirection(dirToPlayer < 0);
                     }
 
                     float dist = GlobalPosition.DistanceTo(TargetPlayer.GlobalPosition);
@@ -231,6 +231,7 @@ public partial class BaseEnemy : CharacterBody2D
                         if (CanAttackPlayer)
                         {
                             CurrentState = EnemyState.Attack;
+                            CreateAttackVFX();
                         }
                         else
                         {
@@ -260,7 +261,7 @@ public partial class BaseEnemy : CharacterBody2D
                 {
                     float dirToPlayer = TargetPlayer.GlobalPosition.X > GlobalPosition.X ? 1f : -1f;
                     if (Math.Abs(TargetPlayer.GlobalPosition.X - GlobalPosition.X) > 5.0f)
-                        AnimSprite.FlipH = dirToPlayer < 0;
+                        SetFacingDirection(dirToPlayer < 0);
                 }
 
                 if (!IsHurt)
@@ -382,5 +383,91 @@ public partial class BaseEnemy : CharacterBody2D
         {
             player.TakeDamage(AttackDamage);
         }
+    }
+
+    protected void SetFacingDirection(bool faceLeft)
+    {
+        AnimSprite.FlipH = faceLeft;
+
+        // Lưu ý: Lật HitArea theo hướng mặt để quái chém chính xác về phía mặt
+        if (AttackArea != null)
+        {
+            var attackPos = AttackArea.Position;
+            float sign = faceLeft ? -1f : 1f;
+            attackPos.X = sign * Math.Abs(attackPos.X);
+            AttackArea.Position = attackPos;
+        }
+    }
+
+    protected void CreateAttackVFX()
+    {
+        // Container cho toàn bộ hiệu ứng chém
+        var slashNode = new Node2D();
+        float faceSign = AnimSprite.FlipH ? -1f : 1f;
+        
+        // Căn chỉnh ra trước mặt quái
+        slashNode.Position = new Vector2(faceSign * 40, -30);
+        AddChild(slashNode);
+
+        // Tạo 3 luồng chém móng vuốt (3 Claws)
+        for (int i = 0; i < 3; i++)
+        {
+            var claw = new ColorRect();
+            claw.Size = new Vector2(6, 70); // Dài và sắc
+            claw.PivotOffset = new Vector2(3, 35);
+            
+            // Xếp 3 vết cào nằm cách nhau và nghiêng chéo
+            claw.Position = new Vector2(-15 + (i * 15), -35);
+            claw.Rotation = faceSign * 0.4f + (i * 0.1f); // Xoè nhẹ ra như bàn tay cào
+            
+            slashNode.AddChild(claw);
+            
+            // Animation từng móng vuốt
+            var tw = CreateTween();
+            tw.SetParallel(true);
+            
+            // Móng vuốt trồi lên từ nhỏ xíu và chém phập xuống
+            claw.Scale = new Vector2(0.1f, 0.1f);
+            tw.TweenProperty(claw, "scale", new Vector2(1.2f, 1.5f), 0.15f).SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+            
+            // Chớp màu từ Vàng Trắng rực rỡ nảy sang Đỏ Máu nhạt dần
+            claw.Color = Colors.Yellow;
+            tw.TweenProperty(claw, "color", new Color(1.0f, 0.0f, 0.0f, 0.9f), 0.1f);
+            
+            // Mờ dần tiêu biến
+            tw.TweenProperty(claw, "modulate:a", 0f, 0.2f).SetDelay(0.1f);
+        }
+
+        // Tạo hiệu ứng vụn văng tung tóe (Tia chém / Máu văng)
+        var sparks = new CpuParticles2D();
+        sparks.Emitting = true;
+        sparks.OneShot = true;
+        sparks.Amount = 20;
+        sparks.Lifetime = 0.4f;
+        sparks.Explosiveness = 0.95f;
+        sparks.EmissionShape = CpuParticles2D.EmissionShapeEnum.Point;
+        
+        // Hướng bắn văng theo chiều chém
+        sparks.Direction = new Vector2(faceSign, -0.5f); 
+        sparks.Spread = 45f;
+        sparks.Gravity = new Vector2(0, 300); // Rơi mạnh
+        sparks.InitialVelocityMin = 150f;
+        sparks.InitialVelocityMax = 300f;
+        
+        // Hạt nhỏ li ti chớp đỏ vang
+        sparks.ScaleAmountMin = 2f;
+        sparks.ScaleAmountMax = 5f;
+        sparks.Color = new Godot.Color(1f, 0.2f, 0.1f, 0.8f);
+        slashNode.AddChild(sparks);
+
+        // Lắc nhẹ không gian quanh vệt chém tạo lực tác động vật lý
+        var shakeTw = CreateTween();
+        shakeTw.TweenProperty(slashNode, "position", slashNode.Position + new Vector2(faceSign * 10, 5), 0.05f);
+        shakeTw.TweenProperty(slashNode, "position", slashNode.Position, 0.1f);
+
+        // Hủy Node sau khi xong xuôi
+        var cleanupTween = CreateTween();
+        cleanupTween.TweenInterval(0.6f);
+        cleanupTween.TweenCallback(Callable.From(() => slashNode.QueueFree()));
     }
 }
