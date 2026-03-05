@@ -25,6 +25,9 @@ public partial class Eagle : BaseEnemy
         DetectRange = 300.0f;
         AttackRange = 80.0f;
         AttackCooldown = 2.0f;
+        
+        // Đẩy Thanh Máu vọt thẳng lên trời để vượt mảng Sprite của đầu Đại Bàng
+        HealthBarOffset = new Vector2(-20, -75);
 
         base._Ready();
         _baseY = GlobalPosition.Y;
@@ -56,18 +59,36 @@ public partial class Eagle : BaseEnemy
             case EnemyState.Patrol:
                 // Horizontal patrol
                 velocity.X = PatrolDirection * MoveSpeed;
-                AnimSprite.FlipH = PatrolDirection < 0;
 
                 // Floating motion
                 float floatY = _baseY + Mathf.Sin(_floatTimer * FloatFrequency) * FloatAmplitude;
                 velocity.Y = (floatY - GlobalPosition.Y) * 5.0f;
 
-                // Check patrol bounds
-                if (Math.Abs(GlobalPosition.X - StartPosition.X) >= PatrolDistance)
+                // Check for walls (Bounce properly using Normal to avoid sticking)
+                if (IsOnWall())
                 {
-                    PatrolDirection *= -1;
+                    float wallNormalX = GetWallNormal().X;
+                    if (Math.Abs(wallNormalX) > 0.1f)
+                        PatrolDirection = wallNormalX > 0 ? 1 : -1;
+                    else
+                        PatrolDirection *= -1;
+                    velocity.X = PatrolDirection * MoveSpeed;
                 }
 
+                // Check patrol bounds
+                float distFromStart = GlobalPosition.X - StartPosition.X;
+                if (distFromStart >= PatrolDistance && PatrolDirection > 0)
+                {
+                    PatrolDirection = -1;
+                    velocity.X = PatrolDirection * MoveSpeed;
+                }
+                else if (distFromStart <= -PatrolDistance && PatrolDirection < 0)
+                {
+                    PatrolDirection = 1;
+                    velocity.X = PatrolDirection * MoveSpeed;
+                }
+
+                AnimSprite.FlipH = PatrolDirection < 0;
                 AnimSprite.Play("walk");
                 break;
 
@@ -84,11 +105,14 @@ public partial class Eagle : BaseEnemy
                     // Add floating motion
                     velocity.Y += Mathf.Sin(_floatTimer * FloatFrequency) * FloatAmplitude;
 
-                    AnimSprite.FlipH = (TargetPlayer.GlobalPosition.X - GlobalPosition.X) < 0;
+                    float distX = Math.Abs(GlobalPosition.X - TargetPlayer.GlobalPosition.X);
+                    if (distX > 5.0f)
+                    {
+                        AnimSprite.FlipH = (TargetPlayer.GlobalPosition.X - GlobalPosition.X) < 0;
+                    }
 
-                    float horizontalDist = Math.Abs(GlobalPosition.X - TargetPlayer.GlobalPosition.X);
                     // Start dive if horizontally close
-                    if (horizontalDist <= AttackRange && CanAttackPlayer)
+                    if (distX <= AttackRange && CanAttackPlayer)
                     {
                         CurrentState = EnemyState.Attack;
                         _isDiving = true;
@@ -108,7 +132,10 @@ public partial class Eagle : BaseEnemy
                     Vector2 diveDir = (TargetPlayer.GlobalPosition - GlobalPosition).Normalized();
                     velocity = diveDir * DiveSpeed;
                     AnimSprite.Play("attack");
-                    AnimSprite.FlipH = diveDir.X < 0;
+                    
+                    float distX = Math.Abs(GlobalPosition.X - TargetPlayer.GlobalPosition.X);
+                    if (distX > 5.0f) 
+                        AnimSprite.FlipH = diveDir.X < 0;
 
                     // If eagle has reached player's height or lower, pull up
                     if (GlobalPosition.Y >= TargetPlayer.GlobalPosition.Y - 20 || IsOnFloor())
@@ -128,8 +155,13 @@ public partial class Eagle : BaseEnemy
                     velocity = escapeDir * DiveSpeed * 0.8f;
                     AnimSprite.Play("walk");
 
-                    if (escapeDir.X != 0)
-                        AnimSprite.FlipH = escapeDir.X < 0;
+                    // Nhìn về phía người chơi ngay cả khi đang rút lui bay lên
+                    if (TargetPlayer != null)
+                    {
+                        float distX = Math.Abs(GlobalPosition.X - TargetPlayer.GlobalPosition.X);
+                        if (distX > 5.0f) 
+                            AnimSprite.FlipH = (TargetPlayer.GlobalPosition.X - GlobalPosition.X) < 0;
+                    }
 
                     // Once high enough, go back to Chase
                     if (TargetPlayer != null && GlobalPosition.Y <= targetPos.Y - FlyHeight + 20)

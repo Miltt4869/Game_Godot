@@ -13,6 +13,13 @@ public partial class GameManager : Node
     public int MaxPlayerHealth { get; set; } = 100;
     public bool IsGameOver { get; set; } = false;
     public bool IsPaused { get; set; } = false;
+    public bool HasBossKey { get; set; } = false;
+
+    // Transition UI
+    private CanvasLayer _transitionLayer;
+    private ColorRect   _transitionRect;
+    private Label       _transitionLabel;
+    private bool        _isTransitioning = false;
 
     // Level paths
     private readonly string[] _levelPaths = {
@@ -25,6 +32,67 @@ public partial class GameManager : Node
     {
         Instance = this;
         ProcessMode = ProcessModeEnum.Always;
+
+        // Tự động thêm Layer chuyển cảnh đen toàn cầu
+        _transitionLayer = new CanvasLayer();
+        _transitionLayer.Layer = 100; // Đảm bảo luôn nằm trên cùng
+
+        _transitionRect = new ColorRect();
+        _transitionRect.Color = new Color(0, 0, 0, 0);
+        _transitionRect.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        _transitionRect.MouseFilter = Control.MouseFilterEnum.Ignore;
+
+        _transitionLabel = new Label();
+        _transitionLabel.Text = "Đang tải...";
+        _transitionLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        _transitionLabel.VerticalAlignment = VerticalAlignment.Center;
+        _transitionLabel.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        _transitionLabel.AddThemeFontSizeOverride("font_size", 28);
+        _transitionLabel.Visible = false;
+
+        _transitionLayer.AddChild(_transitionRect);
+        _transitionLayer.AddChild(_transitionLabel);
+        AddChild(_transitionLayer);
+    }
+
+    // ── Global Scene Transition ──────────────────────────────────
+    public void ChangeSceneWithTransition(string path, bool showLoading = false)
+    {
+        if (_isTransitioning) return;
+        _isTransitioning = true;
+
+        var tw = CreateTween();
+        // 1. Fade màn hình sang đen (nhanh)
+        tw.TweenProperty(_transitionRect, "color:a", 1.0f, 0.2f)
+          .SetTrans(Tween.TransitionType.Quad)
+          .SetEase(Tween.EaseType.In);
+        
+        // 2. Hiện "Đang tải..."
+        tw.TweenCallback(Callable.From(() =>
+        {
+            if (showLoading) _transitionLabel.Visible = true;
+        }));
+
+        tw.TweenInterval(0.1f); // Cho user nhìn thấy để khỏi tưởng lag
+
+        // 3. Chuyển scene trong khi màn hình vẫn đang đen thui!
+        tw.TweenCallback(Callable.From(() =>
+        {
+            GetTree().ChangeSceneToFile(path);
+        }));
+
+        tw.TweenInterval(0.15f); // Đợi scene mới render frames đầu tiên dưới nền đen
+
+        // 4. Fade từ đen thành trong suốt (hiện scene mới lên)
+        tw.TweenCallback(Callable.From(() =>
+        {
+            _transitionLabel.Visible = false;
+        }));
+        tw.TweenProperty(_transitionRect, "color:a", 0.0f, 0.4f)
+          .SetTrans(Tween.TransitionType.Quad)
+          .SetEase(Tween.EaseType.Out);
+        
+        tw.TweenCallback(Callable.From(() => { _isTransitioning = false; }));
     }
 
     public void StartGame()
@@ -41,11 +109,10 @@ public partial class GameManager : Node
         CurrentLevel = level;
         if (level > _levelPaths.Length)
         {
-            // Player won all levels!
             WinGame();
             return;
         }
-        GetTree().ChangeSceneToFile(_levelPaths[level - 1]);
+        ChangeSceneWithTransition(_levelPaths[level - 1], showLoading: true);
     }
 
     public void NextLevel()
@@ -54,10 +121,7 @@ public partial class GameManager : Node
         LoadLevel(CurrentLevel);
     }
 
-    public void AddScore(int points)
-    {
-        Score += points;
-    }
+    public void AddScore(int points) => Score += points;
 
     public void PlayerTakeDamage(int damage)
     {
@@ -69,20 +133,17 @@ public partial class GameManager : Node
         }
     }
 
-    public void HealPlayer(int amount)
-    {
-        PlayerHealth = Math.Min(PlayerHealth + amount, MaxPlayerHealth);
-    }
+    public void HealPlayer(int amount) => PlayerHealth = Math.Min(PlayerHealth + amount, MaxPlayerHealth);
 
     public void GameOver()
     {
         IsGameOver = true;
-        GetTree().ChangeSceneToFile("res://Scenes/Main/GameOver.tscn");
+        ChangeSceneWithTransition("res://Scenes/Main/GameOver.tscn", showLoading: false);
     }
 
     public void WinGame()
     {
-        GetTree().ChangeSceneToFile("res://Scenes/Main/WinScreen.tscn");
+        ChangeSceneWithTransition("res://Scenes/Main/WinScreen.tscn", showLoading: false);
     }
 
     public void GoToMainMenu()
@@ -91,7 +152,7 @@ public partial class GameManager : Node
         Score = 0;
         CurrentLevel = 1;
         PlayerHealth = MaxPlayerHealth;
-        GetTree().ChangeSceneToFile("res://Scenes/Main/MainMenu.tscn");
+        ChangeSceneWithTransition("res://Scenes/Main/MainMenu.tscn", showLoading: false);
     }
 
     public void RestartLevel()
@@ -103,10 +164,7 @@ public partial class GameManager : Node
 
     public override void _Input(InputEvent @event)
     {
-        if (@event.IsActionPressed("pause"))
-        {
-            TogglePause();
-        }
+        if (@event.IsActionPressed("pause")) TogglePause();
     }
 
     public void TogglePause()

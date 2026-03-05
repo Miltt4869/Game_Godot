@@ -35,6 +35,11 @@ public partial class BaseEnemy : CharacterBody2D
     protected Timer HurtTimer;
     protected Timer DeathTimer;
 
+    // UI
+    [Export] public Vector2 HealthBarOffset = new Vector2(-20, -60); // Vị trí thanh máu trên đầu
+    protected Node2D _healthBarNode;
+    protected ColorRect _healthBarFill;
+
     // Player reference
     protected Player TargetPlayer;
 
@@ -101,6 +106,43 @@ public partial class BaseEnemy : CharacterBody2D
         }
 
         AnimSprite.AnimationFinished += OnAnimationFinished;
+
+        // Khởi tạo Thanh Máu Xịn cho tất cả loại Quái!
+        SetupHealthBar();
+    }
+
+    protected void SetupHealthBar()
+    {
+        // Wrapper node
+        _healthBarNode = new Node2D();
+        _healthBarNode.Position = HealthBarOffset; // Vị trí neo lơ lửng trên đầu quái
+        
+        // 1. Viền đen ngoài cùng (Black Border)
+        ColorRect border = new ColorRect();
+        border.Color = new Color(0.05f, 0.05f, 0.05f, 1f); // Đen kịt điểm xuyết
+        border.Size = new Vector2(40, 8); // Kích thước tổng
+        border.Position = new Vector2(0, 0);
+        border.MouseFilter = Control.MouseFilterEnum.Ignore;
+        
+        // 2. Nền xám tối (Dark background for missing health)
+        ColorRect bg = new ColorRect();
+        bg.Color = new Color(0.2f, 0.2f, 0.2f, 1f); // Xám tro
+        bg.Size = new Vector2(38, 6); // Nhỏ hơn viền 2 pixel (thụt vô 1 pixel mỗi cạnh)
+        bg.Position = new Vector2(1, 1);
+        bg.MouseFilter = Control.MouseFilterEnum.Ignore;
+        
+        // 3. Thanh lõi Xanh Lục (Health Fill)
+        _healthBarFill = new ColorRect();
+        _healthBarFill.Color = new Color("4caf50"); // Xanh lục tươi chuẩn RPG
+        _healthBarFill.Size = new Vector2(38, 6); 
+        _healthBarFill.Position = new Vector2(1, 1);
+        _healthBarFill.MouseFilter = Control.MouseFilterEnum.Ignore;
+
+        border.AddChild(bg);
+        _healthBarNode.AddChild(border);
+        _healthBarNode.AddChild(_healthBarFill);
+        
+        AddChild(_healthBarNode);
     }
 
     /// <summary>
@@ -135,46 +177,92 @@ public partial class BaseEnemy : CharacterBody2D
         {
             case EnemyState.Patrol:
                 velocity.X = PatrolDirection * MoveSpeed;
-                AnimSprite.FlipH = PatrolDirection < 0;
 
-                // Check patrol bounds
-                if (Math.Abs(GlobalPosition.X - StartPosition.X) >= PatrolDistance)
-                {
-                    PatrolDirection *= -1;
-                }
-
-                // Check for walls
+                // Check for walls an toàn trước (Chống kẹt dốc nhỏ lồi lõm dùng GetWallNormal)
                 if (IsOnWall())
                 {
-                    PatrolDirection *= -1;
+                    float wallNormalX = GetWallNormal().X;
+                    if (Math.Abs(wallNormalX) > 0.1f)
+                    {
+                        PatrolDirection = wallNormalX > 0 ? 1 : -1;
+                    }
+                    else
+                    {
+                        PatrolDirection *= -1;
+                    }
+                    velocity.X = PatrolDirection * MoveSpeed; // Cập nhật ngay lập tức để không lùi vào tường ở next frame
                 }
 
+                // Check patrol bounds: Khóa chân không cho ra khỏi vùng
+                float distFromStart = GlobalPosition.X - StartPosition.X;
+                if (distFromStart >= PatrolDistance && PatrolDirection > 0)
+                {
+                    PatrolDirection = -1;
+                    velocity.X = PatrolDirection * MoveSpeed;
+                }
+                else if (distFromStart <= -PatrolDistance && PatrolDirection < 0)
+                {
+                    PatrolDirection = 1;
+                    velocity.X = PatrolDirection * MoveSpeed;
+                }
+
+                AnimSprite.FlipH = PatrolDirection < 0;
                 AnimSprite.Play("walk");
                 break;
 
             case EnemyState.Chase:
                 if (TargetPlayer != null && !TargetPlayer.IsQueuedForDeletion())
                 {
-                    float dirToPlayer = Mathf.Sign(TargetPlayer.GlobalPosition.X - GlobalPosition.X);
-                    velocity.X = dirToPlayer * MoveSpeed * 1.5f;
-                    AnimSprite.FlipH = dirToPlayer < 0;
+                    float distX = Math.Abs(TargetPlayer.GlobalPosition.X - GlobalPosition.X);
+                    // Luôn luôn nhận diện hướng nhìn về người chơi
+                    float dirToPlayer = TargetPlayer.GlobalPosition.X > GlobalPosition.X ? 1f : -1f;
+
+                    // Chỉ lật mặt nếu khoảng cách an toàn (tránh jitter 60 nhịp/giây khi rúc vào nhau)
+                    if (distX > 5.0f) 
+                    {
+                        AnimSprite.FlipH = dirToPlayer < 0;
+                    }
 
                     float dist = GlobalPosition.DistanceTo(TargetPlayer.GlobalPosition);
-                    if (dist <= AttackRange && CanAttackPlayer)
+                    
+                    if (dist <= AttackRange)
                     {
-                        CurrentState = EnemyState.Attack;
-                        velocity.X = 0;
+                        velocity.X = 0; // Đứng yên để đánh
+                        if (CanAttackPlayer)
+                        {
+                            CurrentState = EnemyState.Attack;
+                        }
+                        else
+                        {
+                            // Né việc vừa Chase vừa chém khi Cooldown -> Lùi vô Idle
+                            if (AnimSprite.SpriteFrames != null && AnimSprite.SpriteFrames.HasAnimation("idle"))
+                                AnimSprite.Play("idle");
+                            else
+                                AnimSprite.Play("walk");
+                        }
+                    }
+                    else
+                    {
+                        velocity.X = dirToPlayer * MoveSpeed * 1.5f;
+                        AnimSprite.Play("walk");
                     }
                 }
                 else
                 {
                     CurrentState = EnemyState.Patrol;
                 }
-                AnimSprite.Play("walk");
                 break;
 
             case EnemyState.Attack:
                 velocity.X = 0;
+                // Khi đứng đánh lúc nào cũng khóa Mục tiêu để phang đối thủ (xoay liên tục theo người chơi)
+                if (TargetPlayer != null && !TargetPlayer.IsQueuedForDeletion())
+                {
+                    float dirToPlayer = TargetPlayer.GlobalPosition.X > GlobalPosition.X ? 1f : -1f;
+                    if (Math.Abs(TargetPlayer.GlobalPosition.X - GlobalPosition.X) > 5.0f)
+                        AnimSprite.FlipH = dirToPlayer < 0;
+                }
+
                 if (!IsHurt)
                 {
                     AnimSprite.Play("attack");
@@ -195,7 +283,7 @@ public partial class BaseEnemy : CharacterBody2D
         MoveAndSlide();
     }
 
-    public void TakeDamage(int damage)
+    public virtual void TakeDamage(int damage)
     {
         if (IsDead) return;
 
@@ -203,6 +291,13 @@ public partial class BaseEnemy : CharacterBody2D
         IsHurt = true;
         CurrentState = EnemyState.Hurt;
         HurtTimer.Start();
+        
+        // Cập nhật Size thanh máu Pixel-Perfect
+        if (_healthBarFill != null && IsInstanceValid(_healthBarFill))
+        {
+            float percent = Math.Max(0f, (float)Health / MaxHealth);
+            _healthBarFill.Size = new Vector2(38f * percent, 6f);
+        }
 
         // Flash effect
         AnimSprite.Modulate = new Color(1, 0.3f, 0.3f);
@@ -217,6 +312,13 @@ public partial class BaseEnemy : CharacterBody2D
 
     protected virtual void Die()
     {
+        // Khi chết thu hồi Xóa bỏ thanh Máu
+        if (_healthBarNode != null && IsInstanceValid(_healthBarNode))
+        {
+            _healthBarNode.QueueFree();
+            _healthBarNode = null;
+        }
+
         IsDead = true;
         CurrentState = EnemyState.Dead;
         AnimSprite.Play("die");

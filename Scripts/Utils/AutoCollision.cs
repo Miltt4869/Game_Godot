@@ -9,24 +9,29 @@ public partial class AutoCollision : StaticBody2D
 {
     public override void _Ready()
     {
-        // Find the ColorRect child
-        ColorRect colorRect = null;
+        // Find the ground visual child (can be ColorRect or TextureRect)
+        Control groundVisual = null;
         foreach (var child in GetChildren())
         {
             if (child is ColorRect cr)
             {
-                colorRect = cr;
+                groundVisual = cr;
+                break;
+            }
+            if (child is TextureRect tr)
+            {
+                groundVisual = tr;
                 break;
             }
         }
 
-        if (colorRect == null) return;
+        if (groundVisual == null) return;
 
-        // Calculate size from the ColorRect offsets
-        float width = colorRect.OffsetRight - colorRect.OffsetLeft;
-        float height = colorRect.OffsetBottom - colorRect.OffsetTop;
-        float centerX = (colorRect.OffsetLeft + colorRect.OffsetRight) / 2.0f;
-        float centerY = (colorRect.OffsetTop + colorRect.OffsetBottom) / 2.0f;
+        // Calculate size from the offsets
+        float width = groundVisual.OffsetRight - groundVisual.OffsetLeft;
+        float height = groundVisual.OffsetBottom - groundVisual.OffsetTop;
+        float centerX = (groundVisual.OffsetLeft + groundVisual.OffsetRight) / 2.0f;
+        float centerY = (groundVisual.OffsetTop + groundVisual.OffsetBottom) / 2.0f;
 
         // Create or update collision shape
         var collisionShape = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");

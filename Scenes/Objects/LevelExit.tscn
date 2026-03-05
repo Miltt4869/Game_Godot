@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://levelexit001"]
+
+[ext_resource type="Script" path="res://Scripts/Objects/LevelExit.cs" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
+size = Vector2(80, 120)
+
+[node name="LevelExit" type="Area2D"]
+script = ExtResource("1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_exit")

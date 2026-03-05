@@ -19,6 +19,7 @@ public partial class FollowCamera : Camera2D
     {
         // Make this the current camera
         MakeCurrent();
+        AddToGroup("MainCamera");
     }
 
     public override void _Process(double delta)

@@ -1,0 +1,57 @@
+using Godot;
+
+public partial class LevelExit : Area2D
+{
+    private bool _isActive = false;
+    private Label _hintLabel;
+    private Sprite2D _visual;
+
+    public override void _Ready()
+    {
+        AddToGroup("LevelExit");
+        CollisionLayer = 0;
+        CollisionMask = 1; // Player
+        BodyEntered += OnBodyEntered;
+
+        // Visual (Cổng ra sáng rực)
+        _visual = new Sprite2D();
+        _visual.Texture = GD.Load<Texture2D>("res://Assets/Sprites/Backgrounds/Cave_door.png");
+        _visual.Scale = new Vector2(0.5f, 0.5f);
+        _visual.Modulate = new Color(0.5f, 1.0f, 0.5f, 0.5f); // Màu xanh mờ ban đầu
+        AddChild(_visual);
+
+        // Label gợi ý
+        _hintLabel = new Label();
+        _hintLabel.Text = "✦ LỐI THOÁT ✦";
+        _hintLabel.Position = new Vector2(-50, -100);
+        _hintLabel.Visible = false;
+        AddChild(_hintLabel);
+
+        // Ban đầu bị ẩn
+        Visible = false;
+    }
+
+    public void Activate()
+    {
+        _isActive = true;
+        Visible = true;
+        _visual.Modulate = Colors.White; // Hiện rõ cổng
+        
+        // Hiệu ứng phát sáng
+        var tween = CreateTween();
+        tween.SetLoops();
+        tween.TweenProperty(_visual, "modulate", new Color(1.5f, 1.5f, 1.5f), 0.8f);
+        tween.TweenProperty(_visual, "modulate", Colors.White, 0.8f);
+    }
+
+    private void OnBodyEntered(Node2D body)
+    {
+        if (!_isActive) return;
+        
+        if (body is Player)
+        {
+            GD.Print("Chúc mừng! Bạn đã thoát khỏi hang động!");
+            GameManager.Instance.WinGame();
+        }
+    }
+}

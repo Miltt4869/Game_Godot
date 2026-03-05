@@ -62,9 +62,9 @@ public partial class HUD : CanvasLayer
         {
             string levelName = GameManager.Instance.CurrentLevel switch
             {
-                1 => "Rừng Cấm",
-                2 => "Hang Đá",
-                3 => "Lâu Đài",
+                1 => "Đường Rừng Hiểm Trở",
+                2 => "Hang Tối Hiểm Nguy",
+                3 => "Đại Chiến Chằn Tinh",
                 _ => $"Level {GameManager.Instance.CurrentLevel}"
             };
             _levelLabel.Text = levelName;

@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://gameover001"]
 
-[ext_resource type="Script" path="res://Scripts/UI/GameOver.cs" id="1"]
+[ext_resource type="Script" uid="uid://bvts6rdxuij8j" path="res://Scripts/UI/GameOver.cs" id="1"]
 
-[node name="GameOver" type="Control"]
+[node name="GameOver" type="Control" unique_id=202312175]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,53 +11,135 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="BgDark" type="ColorRect" parent="." unique_id=755318978]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.15, 0.05, 0.05, 1)
+color = Color(0.06, 0.01, 0.02, 1)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="Vignette" type="ColorRect" parent="." unique_id=456789123]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -120.0
-offset_right = 200.0
-offset_bottom = 120.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 20
-alignment = 1
+color = Color(0.45, 0, 0, 0.22)
 
-[node name="TitleLabel" type="Label" parent="VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
-theme_override_font_sizes/font_size = 40
-text = "GAME OVER"
+[node name="IconLabel" type="Label" parent="." unique_id=201100001]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -60.0
+offset_top = 160.0
+offset_right = 60.0
+offset_bottom = 230.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.2, 0.1, 1)
+theme_override_font_sizes/font_size = 56
+text = "💀"
 horizontal_alignment = 1
 
-[node name="ScoreLabel" type="Label" parent="VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+[node name="TitleLabel" type="Label" parent="." unique_id=1091952227]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -250.0
+offset_top = 235.0
+offset_right = 250.0
+offset_bottom = 310.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.15, 0.08, 1)
+theme_override_font_sizes/font_size = 50
+text = "GAME OVER"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ScoreLabel" type="Label" parent="." unique_id=328116418]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 315.0
+offset_right = 150.0
+offset_bottom = 360.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.45, 1)
 theme_override_font_sizes/font_size = 24
 text = "Điểm: 0"
 horizontal_alignment = 1
 
-[node name="RetryButton" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-custom_minimum_size = Vector2(250, 50)
-theme_override_font_sizes/font_size = 20
-text = "🔄 THỬ LẠI"
+[node name="RetryButton" type="Button" parent="." unique_id=825432553]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180.0
+offset_top = 395.0
+offset_right = 180.0
+offset_bottom = 450.0
+grow_horizontal = 2
+theme_override_colors/font_hover_color = Color(1, 1, 0.3, 1)
+theme_override_font_sizes/font_size = 22
+text = "🔄   THỬ LẠI   [SPACE]"
 
-[node name="MenuButton" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-custom_minimum_size = Vector2(250, 50)
-theme_override_font_sizes/font_size = 20
-text = "🏠 VỀ MENU"
+[node name="HintLabel" type="Label" parent="." unique_id=901000001]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -280.0
+offset_top = 460.0
+offset_right = 280.0
+offset_bottom = 490.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 0.8)
+theme_override_font_sizes/font_size = 14
+text = "Nhấn SPACE hoặc Click chuột  •  ESC về Menu"
+horizontal_alignment = 1
+
+[node name="MenuButton" type="Button" parent="." unique_id=1363976953]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 500.0
+offset_right = 160.0
+offset_bottom = 548.0
+grow_horizontal = 2
+theme_override_colors/font_hover_color = Color(1, 0.6, 0.4, 1)
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 18
+text = "🏠   VỀ MENU CHÍNH"
+
+[node name="FlashOverlay" type="ColorRect" parent="." unique_id=755318999]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="LoadingLabel" type="Label" parent="." unique_id=888999777]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 28
+text = "Đang tải"
+horizontal_alignment = 1
+vertical_alignment = 1

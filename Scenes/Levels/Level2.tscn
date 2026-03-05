@@ -7,191 +7,101 @@
 [ext_resource type="PackedScene" uid="uid://player001" path="res://Scenes/Player/Player.tscn" id="5"]
 [ext_resource type="PackedScene" uid="uid://snake001" path="res://Scenes/Enemies/Snake.tscn" id="6"]
 [ext_resource type="PackedScene" uid="uid://eagle001" path="res://Scenes/Enemies/Eagle.tscn" id="7"]
-[ext_resource type="PackedScene" uid="uid://princess001" path="res://Scenes/NPCs/Princess.tscn" id="8"]
+[ext_resource type="PackedScene" uid="uid://chest0000001" path="res://Scenes/NPCs/TreasureChest.tscn" id="8"]
+[ext_resource type="Texture2D" uid="uid://b0vx13i1dftha" path="res://Assets/Sprites/Backgrounds/cave_ground.png" id="9"]
 
-[node name="Level2" type="Node2D" unique_id=130518366]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
+size = Vector2(4000, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
+size = Vector2(120, 20)
+
+[node name="Level2" type="Node2D" unique_id=268302130]
 script = ExtResource("1")
 LevelNumber = 2
 PlayerScene = ExtResource("5")
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=632037720]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1047683929]
 position = Vector2(576, 324)
 script = ExtResource("4")
+SmoothSpeed = 8.0
+MaxX = 4000.0
 
-[node name="Background" type="ColorRect" parent="." unique_id=1963945984]
+[node name="Background" type="ColorRect" parent="." unique_id=674989415]
 z_index = -10
-offset_right = 3000.0
-offset_bottom = 648.0
-color = Color(0.08, 0.06, 0.12, 1)
+offset_right = 4000.0
+offset_bottom = 800.0
+color = Color(0.12, 0.1, 0.15, 1)
 
-[node name="CaveTop" type="ColorRect" parent="." unique_id=448046909]
+[node name="CaveTop" type="ColorRect" parent="." unique_id=513254125]
 z_index = -5
-offset_right = 3000.0
+offset_right = 4000.0
 offset_bottom = 80.0
-color = Color(0.15, 0.1, 0.08, 1)
+color = Color(0.2, 0.15, 0.12, 1)
 
-[node name="Stalactite1" type="ColorRect" parent="." unique_id=929121162]
-z_index = -4
-offset_left = 250.0
-offset_right = 270.0
-offset_bottom = 120.0
-color = Color(0.18, 0.13, 0.1, 1)
-
-[node name="Stalactite2" type="ColorRect" parent="." unique_id=1322056139]
-z_index = -4
-offset_left = 600.0
-offset_right = 615.0
-offset_bottom = 100.0
-color = Color(0.18, 0.13, 0.1, 1)
-
-[node name="Stalactite3" type="ColorRect" parent="." unique_id=525176752]
-z_index = -4
-offset_left = 1050.0
-offset_right = 1070.0
-offset_bottom = 140.0
-color = Color(0.18, 0.13, 0.1, 1)
-
-[node name="CaveWall1" type="ColorRect" parent="." unique_id=2097369961]
-z_index = -3
-offset_left = -10.0
-offset_top = 200.0
-offset_right = 30.0
-offset_bottom = 600.0
-color = Color(0.12, 0.09, 0.06, 1)
-
-[node name="CaveWall2" type="ColorRect" parent="." unique_id=927486575]
-z_index = -3
-offset_left = 2970.0
-offset_top = 200.0
-offset_right = 3010.0
-offset_bottom = 600.0
-color = Color(0.12, 0.09, 0.06, 1)
-
-[node name="Mushroom1" type="ColorRect" parent="." unique_id=977187580]
-z_index = -2
-offset_left = 380.0
-offset_top = 555.0
-offset_right = 400.0
-offset_bottom = 580.0
-color = Color(0.6, 0.2, 0.1, 1)
-
-[node name="Mushroom2" type="ColorRect" parent="." unique_id=1759873224]
-z_index = -2
-offset_left = 900.0
-offset_top = 555.0
-offset_right = 920.0
-offset_bottom = 580.0
-color = Color(0.5, 0.3, 0.8, 1)
-
-[node name="Ground" type="StaticBody2D" parent="." unique_id=942325816]
-position = Vector2(1500, 590)
+[node name="Ground" type="StaticBody2D" parent="." unique_id=997047268]
+position = Vector2(2000, 640)
 collision_layer = 2
 script = ExtResource("3")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=1390835834]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=1957375193]
+shape = SubResource("RectangleShape2D_ground")
 
-[node name="GroundSprite" type="ColorRect" parent="Ground" unique_id=1746438926]
-offset_left = -1600.0
-offset_top = -10.0
-offset_right = 1600.0
-offset_bottom = 80.0
-color = Color(0.2, 0.15, 0.1, 1)
+[node name="GroundSprite" type="Sprite2D" parent="Ground" unique_id=675227010]
+texture_repeat = 2
+texture = ExtResource("9")
+region_enabled = true
+region_rect = Rect2(0, 0, 4000, 128)
 
-[node name="Platform1" type="StaticBody2D" parent="." unique_id=1828259479]
+[node name="Platform1" type="StaticBody2D" parent="." unique_id=2125117910]
 position = Vector2(400, 480)
 collision_layer = 2
-script = ExtResource("3")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1" unique_id=1168698763]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1" unique_id=633426218]
+shape = SubResource("RectangleShape2D_plat")
 
-[node name="Sprite" type="ColorRect" parent="Platform1" unique_id=1725084925]
-offset_left = -60.0
-offset_top = -8.0
-offset_right = 60.0
-offset_bottom = 8.0
-color = Color(0.3, 0.22, 0.15, 1)
+[node name="Sprite" type="Sprite2D" parent="Platform1" unique_id=568429640]
+texture_repeat = 2
+texture = ExtResource("9")
+region_enabled = true
+region_rect = Rect2(0, 0, 120, 32)
 
-[node name="Platform2" type="StaticBody2D" parent="." unique_id=1788671211]
-position = Vector2(700, 410)
+[node name="Platform2" type="StaticBody2D" parent="." unique_id=2001823482]
+position = Vector2(750, 410)
 collision_layer = 2
-script = ExtResource("3")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2" unique_id=1998042625]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2" unique_id=1944955318]
+shape = SubResource("RectangleShape2D_plat")
 
-[node name="Sprite" type="ColorRect" parent="Platform2" unique_id=1427492005]
-offset_left = -55.0
-offset_top = -8.0
-offset_right = 55.0
-offset_bottom = 8.0
-color = Color(0.3, 0.22, 0.15, 1)
+[node name="Sprite" type="Sprite2D" parent="Platform2" unique_id=640622458]
+texture_repeat = 2
+texture = ExtResource("9")
+region_enabled = true
+region_rect = Rect2(0, 0, 120, 32)
 
-[node name="Platform3" type="StaticBody2D" parent="." unique_id=1143166260]
-position = Vector2(1050, 350)
+[node name="Platform3" type="StaticBody2D" parent="." unique_id=1967094073]
+position = Vector2(1100, 350)
 collision_layer = 2
-script = ExtResource("3")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform3" unique_id=470332918]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform3" unique_id=162805712]
+shape = SubResource("RectangleShape2D_plat")
 
-[node name="Sprite" type="ColorRect" parent="Platform3" unique_id=1822846114]
-offset_left = -70.0
-offset_top = -8.0
-offset_right = 70.0
-offset_bottom = 8.0
-color = Color(0.3, 0.22, 0.15, 1)
+[node name="Sprite" type="Sprite2D" parent="Platform3" unique_id=1641009072]
+texture_repeat = 2
+texture = ExtResource("9")
+region_enabled = true
+region_rect = Rect2(0, 0, 150, 32)
 
-[node name="Platform4" type="StaticBody2D" parent="." unique_id=925759497]
-position = Vector2(1400, 450)
-collision_layer = 2
-script = ExtResource("3")
+[node name="SpawnPoint" type="Marker2D" parent="." unique_id=121341788]
+position = Vector2(150, 580)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform4" unique_id=242995005]
+[node name="Snake1" parent="." unique_id=1829026353 instance=ExtResource("6")]
+position = Vector2(600, 590)
 
-[node name="Sprite" type="ColorRect" parent="Platform4" unique_id=265517125]
-offset_left = -50.0
-offset_top = -8.0
-offset_right = 50.0
-offset_bottom = 8.0
-color = Color(0.3, 0.22, 0.15, 1)
+[node name="Eagle1" parent="." unique_id=1086481404 instance=ExtResource("7")]
+position = Vector2(900, 250)
 
-[node name="Platform5" type="StaticBody2D" parent="." unique_id=775873826]
-position = Vector2(1800, 400)
-collision_layer = 2
-script = ExtResource("3")
+[node name="TreasureChest" parent="." unique_id=1764620266 instance=ExtResource("8")]
+position = Vector2(3918, 577)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform5" unique_id=346267939]
-
-[node name="Sprite" type="ColorRect" parent="Platform5" unique_id=879954541]
-offset_left = -65.0
-offset_top = -8.0
-offset_right = 65.0
-offset_bottom = 8.0
-color = Color(0.3, 0.22, 0.15, 1)
-
-[node name="SpawnPoint" type="Marker2D" parent="." unique_id=1431659658]
-position = Vector2(100, 550)
-
-[node name="Snake1" parent="." unique_id=1535143909 instance=ExtResource("6")]
-position = Vector2(500, 570)
-
-[node name="Snake2" parent="." unique_id=152645308 instance=ExtResource("6")]
-position = Vector2(900, 570)
-
-[node name="Snake3" parent="." unique_id=1680549716 instance=ExtResource("6")]
-position = Vector2(1300, 570)
-
-[node name="Snake3" parent="Snake3" unique_id=482963297 instance=ExtResource("6")]
-position = Vector2(419, -7)
-
-[node name="Snake3" parent="Snake3/Snake3" unique_id=1562582372 instance=ExtResource("6")]
-position = Vector2(76, -166)
-
-[node name="Eagle1" parent="." unique_id=286645788 instance=ExtResource("7")]
-position = Vector2(800, 300)
-
-[node name="Eagle1" parent="Eagle1" unique_id=1298003044 instance=ExtResource("7")]
-position = Vector2(594, 2)
-
-[node name="Princess" parent="." unique_id=441815705 instance=ExtResource("8")]
-position = Vector2(2300, 555)
-
-[node name="HUD" parent="." unique_id=1429479998 instance=ExtResource("2")]
+[node name="HUD" parent="." unique_id=1867016541 instance=ExtResource("2")]

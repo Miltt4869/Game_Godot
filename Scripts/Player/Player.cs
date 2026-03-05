@@ -24,7 +24,12 @@ public partial class Player : CharacterBody2D
     private float _jumpBufferTimer = 0f;
     private bool _wasOnFloor = false;
     private bool _isJumping = false;
+    private bool _hasDoubleJumped = false;                // Thêm: Check nhảy đúp
     private float _facingDirection = 1f;                  // 1 = phải, -1 = trái
+    
+    // Cutscene / Auto Walk
+    private bool _inCutscene = false;
+    private float _cutsceneDirection = 0f;
 
     // Combat
     [Export] public int AttackDamage = 25;
@@ -47,6 +52,11 @@ public partial class Player : CharacterBody2D
     private CollisionShape2D _attackCollision;
     private Timer _attackCooldownTimer;
     private Timer _hurtTimer;
+    
+    // Audio
+    private AudioStreamPlayer _sfxPlayer;
+    private AudioStreamPlayer _sfxStepPlayer;
+    private float _stepTimer = 0f;
 
     // Signals
     [Signal] public delegate void HealthChangedEventHandler(int newHealth, int maxHealth);
@@ -82,6 +92,16 @@ public partial class Player : CharacterBody2D
         _hurtTimer.Timeout += OnHurtTimeout;
         AddChild(_hurtTimer);
 
+        // Khởi tạo kênh Phát Ám Thanh Đặc Trưng (Gắn vào Player)
+        _sfxPlayer = new AudioStreamPlayer();
+        _sfxPlayer.VolumeDb = -5f;
+        AddChild(_sfxPlayer);
+        
+        // Kênh đặc biệt riêng cho Bước chạy (để chém/nhảy không ngắt tiếng bước bị giật cục)
+        _sfxStepPlayer = new AudioStreamPlayer();
+        _sfxStepPlayer.VolumeDb = -12f;
+        AddChild(_sfxStepPlayer);
+
         // Connect attack area signal
         _attackArea.BodyEntered += OnAttackAreaBodyEntered;
 
@@ -110,6 +130,7 @@ public partial class Player : CharacterBody2D
         {
             _coyoteTimer = CoyoteTime;
             _isJumping = false;
+            _hasDoubleJumped = false; // Reset kĩ năng nhảy đúp
         }
         else
         {
@@ -117,7 +138,7 @@ public partial class Player : CharacterBody2D
         }
 
         // === JUMP BUFFER - Ghi nhớ input nhảy ===
-        if (Input.IsActionJustPressed("jump"))
+        if (Input.IsActionJustPressed("jump") && !_inCutscene)
         {
             _jumpBufferTimer = JumpBufferTime;
         }
@@ -150,16 +171,40 @@ public partial class Player : CharacterBody2D
 
         // === JUMP - Xử lý nhảy với coyote time và jump buffer ===
         bool canJump = (_coyoteTimer > 0 || onFloor) && !_isAttacking;
-        if (_jumpBufferTimer > 0 && canJump)
+        if (_jumpBufferTimer > 0)
         {
-            velocity.Y = JumpVelocity;
-            _jumpBufferTimer = 0;
-            _coyoteTimer = 0;
-            _isJumping = true;
+            if (canJump)
+            {
+                velocity.Y = JumpVelocity;
+                _jumpBufferTimer = 0;
+                _coyoteTimer = 0;
+                _isJumping = true;
+                
+                // Tiếng bật nhảy lần 1
+                _sfxPlayer.Stream = SFX.GetJumpSound();
+                _sfxPlayer.Play();
+            }
+            else if (!_hasDoubleJumped && !_isAttacking)
+            {
+                // Kích hoạt Nhảy Lần 2 (Double Jump)
+                velocity.Y = JumpVelocity * 0.9f; 
+                _jumpBufferTimer = 0;
+                _hasDoubleJumped = true;
+                _isJumping = true;
+                CreateDoubleJumpVFX();
+                
+                // Âm thanh vút sắc hơn lúc đạp gió nén
+                _sfxPlayer.Stream = SFX.GetDoubleJumpSound();
+                _sfxPlayer.Play();
+                
+                // Ép play lại animation từ frame đầu bằng cách đổi tạm state
+                _animatedSprite.Stop();
+                PlayAnimationIfNotPlaying("jump");
+            }
         }
 
         // === HORIZONTAL MOVEMENT - Di chuyển ngang với acceleration ===
-        float direction = Input.GetAxis("move_left", "move_right");
+        float direction = _inCutscene ? _cutsceneDirection : Input.GetAxis("move_left", "move_right");
         
         if (!_isAttacking)
         {
@@ -207,6 +252,12 @@ public partial class Player : CharacterBody2D
 
         Velocity = velocity;
         MoveAndSlide();
+        
+        // Khóa giới hạn Map bên trái: Chống chạy lố trượt xuống hố khỏi bản đồ (Map border X >= 0)
+        if (GlobalPosition.X < 0)
+        {
+            GlobalPosition = new Vector2(0, GlobalPosition.Y);
+        }
 
         // Ghi nhớ trạng thái floor cho frame tiếp theo
         _wasOnFloor = onFloor;
@@ -223,16 +274,16 @@ public partial class Player : CharacterBody2D
         }
 
         // Attack on click / key press
-        if (Input.IsActionJustPressed("attack") && _canAttack && !_isHurt)
+        if (Input.IsActionJustPressed("attack") && _canAttack && !_isHurt && !_inCutscene)
         {
             Attack();
         }
 
-        // Update animation
-        UpdateAnimation(direction);
+        // Update animation (Truyền delta vào để quản lí tiếng động bước chân)
+        UpdateAnimation(direction, dt);
     }
 
-    private void UpdateAnimation(float direction)
+    private void UpdateAnimation(float direction, float dt)
     {
         if (_isDead) return;
         if (_isAttacking) return;
@@ -265,6 +316,16 @@ public partial class Player : CharacterBody2D
         else if (Math.Abs(Velocity.X) > 10f)  // Dùng velocity thực tế thay vì input
         {
             PlayAnimationIfNotPlaying("run");
+            
+            // Tính nhịp bước chân Lụp Cụp (Noise Sound Generator)
+            _stepTimer -= dt;
+            if (_stepTimer <= 0f)
+            {
+                _stepTimer = 0.35f; // Chân chạy mỗi nửa giây
+                _sfxStepPlayer.Stream = SFX.GetStepSound();
+                _sfxStepPlayer.PitchScale = (float)GD.RandRange(0.8, 1.2); // Sỏi sạn bước chân to nhỏ khác biệt
+                _sfxStepPlayer.Play();
+            }
         }
         else
         {
@@ -302,18 +363,34 @@ public partial class Player : CharacterBody2D
             _animatedSprite.Play("attack");
         }
 
+        // Phân biệt âm thanh nhát chém theo Tần số (Nhát 1, 2 gió vút / Nhát 3 Siêu cực mạnh)
+        _sfxPlayer.Stream = SFX.GetAttackSound(_comboIndex + 1);
+        
+        // Nhát 3 xoay cường công -> âm thanh vỡ rách giòn mạnh -> Screen Shake cho ngầu
+        if (_comboIndex == 2) 
+        {
+            _sfxPlayer.VolumeDb = 2f; 
+        } 
+        else 
+        {
+            _sfxPlayer.VolumeDb = -4f;
+        }
+        _sfxPlayer.Play();
+
         _attackCollision.Disabled = false;
 
         // Attack lasts 0.3 seconds (since each attack is 1 frame, AnimationFinished fires too fast)
         var attackDurationTimer = GetTree().CreateTimer(0.3);
         attackDurationTimer.Timeout += () =>
         {
+            // Guard: Player có thể đã bị QueueFree() trước khi timer kết thúc
+            if (!IsInstanceValid(this) || IsQueuedForDeletion()) return;
             _isAttacking = false;
             _attackCollision.Disabled = true;
         };
 
-        // Advance combo
-        _comboIndex = (_comboIndex + 1) % 4;
+        // Rút gọn giới hạn Combo lại thành 3 HIT liên hoàn (Từ 4 về 3)
+        _comboIndex = (_comboIndex + 1) % 3;
         _comboTimer = 0;
         _comboActive = true;
 
@@ -392,10 +469,70 @@ public partial class Player : CharacterBody2D
         tween.TweenProperty(_animatedSprite, "rotation", Mathf.Pi / 2, 0.8f);
         tween.TweenCallback(Callable.From(() =>
         {
+            // Guard: tránh truy cập sau khi Player đã bị free
+            if (!IsInstanceValid(this) || IsQueuedForDeletion()) return;
+            // Phát signal để LevelManager xử lý (respawn hoặc game over)
             EmitSignal(SignalName.PlayerDied);
             GetNode<CollisionShape2D>("CollisionShape2D").SetDeferred("disabled", true);
-            var timer = GetTree().CreateTimer(1.0);
-            timer.Timeout += () => GameManager.Instance.GameOver();
         }));
+    }
+
+    public void WalkIntoCave(float direction = 1f)
+    {
+        _inCutscene = true;
+        _cutsceneDirection = direction;
+        _isAttacking = false;
+        
+        // Tạo hiệu ứng Player từ từ bị bóng tối nuốt chửng khi đi sâu vào Hang (Mờ trong 1s)
+        var tw = CreateTween();
+        tw.TweenProperty(this, "modulate:a", 0f, 1.0f).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+    }
+
+    private void CreateDoubleJumpVFX()
+    {
+        // Thêm vụ nổ năng lượng xanh ở chân player (cần bắn vào Root parent để ko bay theo nhân vật)
+        var vfx = new DoubleJumpVFX();
+        vfx.GlobalPosition = GlobalPosition + new Vector2(0, 18);
+        GetParent().AddChild(vfx);
+    }
+}
+
+/// <summary>
+/// Hiệu ứng VFX dạng sóng xung kích nổ khí quyển đẹp mắt khi Nhảy đúp (Dùng Draw() Vector tự code)
+/// </summary>
+public partial class DoubleJumpVFX : Node2D
+{
+    private float _radius = 0f;
+    private float _alpha = 1f;
+
+    public override void _Ready()
+    {
+        var tw = CreateTween();
+        tw.SetParallel();
+        // Sóng mở rộng nhanh, tàn biến mờ ảo vào không gian trong 0.35s
+        tw.TweenProperty(this, "_radius", 55f, 0.35f).SetTrans(Tween.TransitionType.Expo).SetEase(Tween.EaseType.Out);
+        tw.TweenProperty(this, "_alpha", 0f, 0.35f).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.In);
+        tw.Chain().TweenCallback(Callable.From(() => QueueFree()));
+    }
+
+    public override void _Process(double delta)
+    {
+        QueueRedraw();
+    }
+
+    public override void _Draw()
+    {
+        // Màu lam trắng của dòng khí chân
+        Color color = new Color(0.6f, 0.95f, 1f, _alpha); 
+        
+        // Cung vòng tròn tỏa ra (Shockwave)
+        DrawArc(Vector2.Zero, _radius, 0, Mathf.Pi * 2, 24, color, 3f * _alpha, true);
+        
+        // Tia năng lượng gió cày văng tung toé (5 đường góc rách)
+        for(int i = 0; i < 5; i++)
+        {
+            Vector2 dir = Vector2.Up.Rotated(i * Mathf.Pi / 2.5f + (_radius * 0.02f)); 
+            DrawLine(dir * (_radius * 0.4f), dir * (_radius * 1.5f), color, 4f * _alpha);
+        }
     }
 }

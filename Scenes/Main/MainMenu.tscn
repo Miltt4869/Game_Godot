@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://mainmenu001"]
+[gd_scene format=3 uid="uid://mainmenu001"]
 
-[ext_resource type="Script" path="res://Scripts/UI/MainMenu.cs" id="1"]
+[ext_resource type="Script" uid="uid://dvyqh65bbe6dc" path="res://Scripts/UI/MainMenu.cs" id="1"]
 
-[node name="MainMenu" type="Control"]
+[node name="MainMenu" type="Control" unique_id=1385777701]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,57 +11,82 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="BgDark" type="ColorRect" parent="." unique_id=1088865894]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.12, 0.2, 1)
+color = Color(0.04, 0.08, 0.15, 1)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="Vignette" type="ColorRect" parent="." unique_id=456789124]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -150.0
-offset_right = 200.0
-offset_bottom = 150.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 20
-alignment = 1
+color = Color(0, 0.1, 0.3, 0.18)
 
-[node name="TitleLabel" type="Label" parent="VBoxContainer"]
-layout_mode = 2
+[node name="TitleLabel" type="Label" parent="." unique_id=1697232200]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 160.0
+offset_right = 300.0
+offset_bottom = 240.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
-theme_override_font_sizes/font_size = 48
-text = "THẠCH SANH"
+theme_override_colors/font_shadow_color = Color(1, 0.4, 0, 0.5)
+theme_override_font_sizes/font_size = 64
+text = "THẠCH SANH 2D"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="SubtitleLabel" type="Label" parent="VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.9, 1)
-theme_override_font_sizes/font_size = 20
+[node name="SubtitleLabel" type="Label" parent="." unique_id=1870114757]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 245.0
+offset_right = 200.0
+offset_bottom = 285.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.7, 0.8, 0.95, 1)
+theme_override_font_sizes/font_size = 22
 text = "Truyền Thuyết Anh Hùng"
 horizontal_alignment = 1
 
-[node name="Spacer" type="Control" parent="VBoxContainer"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 30)
+[node name="PlayButton" type="Button" parent="." unique_id=1668142794]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 370.0
+offset_right = 160.0
+offset_bottom = 430.0
+grow_horizontal = 2
+theme_override_colors/font_hover_color = Color(0.5, 1, 0.5, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "▶ BẮT ĐẦU CHƠI"
 
-[node name="PlayButton" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-custom_minimum_size = Vector2(250, 50)
-theme_override_font_sizes/font_size = 22
-text = "🎮 BẮT ĐẦU CHƠI"
-
-[node name="QuitButton" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-custom_minimum_size = Vector2(250, 50)
-theme_override_font_sizes/font_size = 22
-text = "❌ THOÁT"
+[node name="QuitButton" type="Button" parent="." unique_id=1726844527]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -130.0
+offset_top = 450.0
+offset_right = 130.0
+offset_bottom = 500.0
+grow_horizontal = 2
+theme_override_colors/font_hover_color = Color(1, 0.4, 0.4, 1)
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 18
+text = "❌ THOÁT GAME"

@@ -10,9 +10,12 @@ public partial class Snake : BaseEnemy
         AttackDamage = 15;
         MoveSpeed = 70.0f;
         ScoreValue = 100;
-        PatrolDistance = 120.0f;
+        PatrolDistance = 80.0f; // Vùng tuần tra vừa đủ để nó bò qua lại tự nhiên
         DetectRange = 200.0f;
-        AttackRange = 60.0f;
+        AttackRange = 50.0f;
+        
+        // Đẩy Thanh Máu vọt thẳng lên trời (-90 pixel) để vượt mảng Sprite của đầu Rắn
+        HealthBarOffset = new Vector2(-20, -85);
 
         base._Ready();
     }
