@@ -16,7 +16,7 @@ public partial class MainMenu : Control
         // Gắn sự kiện chuyển cảnh
         playButton.Pressed += OnPlayPressed;
         quitButton.Pressed += OnQuitPressed;
-        
+
         // Mặc định trò chơi bật lên sẽ Focus nút Play 
         playButton.GrabFocus();
 
@@ -31,8 +31,8 @@ public partial class MainMenu : Control
 
     private void OnPlayPressed()
     {
-        // Khi nhấn Bắt đầu chơi: Cần có màn tối đen và chuyển sang Level 1
-        GameManager.Instance.StartGame();
+        // Khi nhấn Bắt đầu chơi: Cần chạy Intro trước khi vào Level 1
+        GameManager.Instance.StartIntro();
     }
 
     private void OnQuitPressed()

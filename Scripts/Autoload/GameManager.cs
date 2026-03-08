@@ -18,9 +18,9 @@ public partial class GameManager : Node
 
     // Transition UI
     private CanvasLayer _transitionLayer;
-    private ColorRect   _transitionRect;
-    private Label       _transitionLabel;
-    private bool        _isTransitioning = false;
+    private ColorRect _transitionRect;
+    private Label _transitionLabel;
+    private bool _isTransitioning = false;
 
     // Level paths
     private readonly string[] _levelPaths = {
@@ -67,7 +67,7 @@ public partial class GameManager : Node
         tw.TweenProperty(_transitionRect, "color:a", 1.0f, 0.2f)
           .SetTrans(Tween.TransitionType.Quad)
           .SetEase(Tween.EaseType.In);
-        
+
         // 2. Hiện "Đang tải..."
         tw.TweenCallback(Callable.From(() =>
         {
@@ -92,8 +92,17 @@ public partial class GameManager : Node
         tw.TweenProperty(_transitionRect, "color:a", 0.0f, 0.4f)
           .SetTrans(Tween.TransitionType.Quad)
           .SetEase(Tween.EaseType.Out);
-        
+
         tw.TweenCallback(Callable.From(() => { _isTransitioning = false; }));
+    }
+
+    public void StartIntro()
+    {
+        Score = 0;
+        CurrentLevel = 1;
+        PlayerHealth = MaxPlayerHealth;
+        IsGameOver = false;
+        ChangeSceneWithTransition("res://Scenes/Main/Intro.tscn", showLoading: false);
     }
 
     public void StartGame()
