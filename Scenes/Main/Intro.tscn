@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://Scripts/UI/Intro.cs" id="1_intro"]
 [ext_resource type="AudioStream" path="res://Assets/sound/intro.mp3" id="2_audio"]
+[ext_resource type="AudioStream" path="res://Assets/sound/intro_MTP.mp3" id="3_music"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_story"]
 font_size = 32
@@ -46,3 +47,8 @@ position = Vector2(0, 500)
 unique_id_label = "IntroAudio"
 stream = ExtResource("2_audio")
 autoplay = true
+
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_music")
+autoplay = true
+volume_db = 2

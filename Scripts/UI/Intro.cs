@@ -7,6 +7,7 @@ public partial class Intro : Control
 	private TextureRect _bgRect;
 	private Texture2D[] _bgTextures;
 	private AudioStreamPlayer _audioPlayer;
+	private AudioStreamPlayer _musicPlayer;
 
 	private int _currentLine = 0;
 	private float _timer = 0;
@@ -20,6 +21,10 @@ public partial class Intro : Control
 	{
 		_bgRect = GetNode<TextureRect>("BackgroundRect");
 		_audioPlayer = GetNode<AudioStreamPlayer>("IntroAudio");
+		_musicPlayer = GetNode<AudioStreamPlayer>("MusicPlayer");
+
+		// Lặp lại nhạc nền
+		_musicPlayer.Finished += () => _musicPlayer.Play();
 
 		// Load 6 hình nền cho Intro
 		_bgTextures = new Texture2D[6];
