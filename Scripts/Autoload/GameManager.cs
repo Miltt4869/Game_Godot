@@ -29,10 +29,20 @@ public partial class GameManager : Node
         "res://Scenes/Levels/Level3.tscn"
     };
 
+    // Audio
+    private AudioStreamPlayer _bgMusicPlayer;
+
     public override void _Ready()
     {
         Instance = this;
         ProcessMode = ProcessModeEnum.Always;
+
+        // Cấu hình âm nhạc toàn cục
+        _bgMusicPlayer = new AudioStreamPlayer();
+        _bgMusicPlayer.Stream = GD.Load<AudioStream>("res://Assets/sound/little town - orchestral.ogg");
+        _bgMusicPlayer.VolumeDb = -10.0f;
+        _bgMusicPlayer.Finished += () => _bgMusicPlayer.Play(); // Lặp lại
+        AddChild(_bgMusicPlayer);
 
         // Tự động thêm Layer chuyển cảnh đen toàn cầu
         _transitionLayer = new CanvasLayer();
@@ -54,6 +64,27 @@ public partial class GameManager : Node
         _transitionLayer.AddChild(_transitionRect);
         _transitionLayer.AddChild(_transitionLabel);
         AddChild(_transitionLayer);
+
+        // Phát nhạc nếu không phải Intro
+        CallDeferred(nameof(CheckInitialMusic));
+    }
+
+    private void CheckInitialMusic()
+    {
+        if (GetTree().CurrentScene?.SceneFilePath != "res://Scenes/Main/Intro.tscn")
+        {
+            PlayBackgroundMusic();
+        }
+    }
+
+    public void PlayBackgroundMusic()
+    {
+        if (!_bgMusicPlayer.Playing) _bgMusicPlayer.Play();
+    }
+
+    public void StopBackgroundMusic()
+    {
+        if (_bgMusicPlayer.Playing) _bgMusicPlayer.Stop();
     }
 
     // ── Global Scene Transition ──────────────────────────────────
@@ -61,6 +92,12 @@ public partial class GameManager : Node
     {
         if (_isTransitioning) return;
         _isTransitioning = true;
+
+        // Kiểm tra nhạc nền cho scene sắp tới
+        if (path == "res://Scenes/Main/Intro.tscn")
+            StopBackgroundMusic();
+        else
+            PlayBackgroundMusic();
 
         var tw = CreateTween();
         // 1. Fade màn hình sang đen (nhanh)
