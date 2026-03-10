@@ -131,7 +131,7 @@ public partial class TreasureChest : Area2D
 
                 // Hiện rương ra khi quái đã chết hết!
                 Visible = true;
-                
+
                 // Tìm lại player để chắc chắn
                 Player p = null;
                 foreach (var b in GetOverlappingBodies()) if (b is Player target) p = target;
@@ -150,14 +150,14 @@ public partial class TreasureChest : Area2D
         else
         {
             _messageLabel.Visible = false;
-            
+
             // Một cơ chế đặc biệt: Nếu quái đã chết hết nhưng người chơi ở xa, rương vẫn phải hiện ra để người chơi biết đường mà tới
             if (RequireAllEnemiesDefeated && !Visible)
             {
                 var enemies = GetTree().GetNodesInGroup("enemies");
                 bool anyAlive = false;
                 foreach (var n in enemies) if (n is BaseEnemy e && !e.IsDead) anyAlive = true;
-                
+
                 if (!anyAlive)
                 {
                     Visible = true;
@@ -232,21 +232,23 @@ public partial class TreasureChest : Area2D
         // Sử dụng hàm PrepareAxeTexture của Player để lấy texture xịn không nền
         string skillPath = "res://Assets/Sprites/Player/Skill_1.png";
         var tex = GD.Load<Texture2D>(skillPath);
-        
+
         if (tex != null)
         {
             // Tách nền để icon đẹp hơn (RGB 35, 35, 35 thường là nền đen trong sprite game này)
             Image img = tex.GetImage();
             img.Decompress();
             img.Convert(Image.Format.Rgba8);
-            
+
             // Xóa nền đen/xám nếu có
             Color bgColor = img.GetPixel(0, 0);
-            for (int y = 0; y < img.GetHeight(); y++) {
-                for (int x = 0; x < img.GetWidth(); x++) {
+            for (int y = 0; y < img.GetHeight(); y++)
+            {
+                for (int x = 0; x < img.GetWidth(); x++)
+                {
                     Color p = img.GetPixel(x, y);
                     float diff = Mathf.Sqrt(Mathf.Pow(p.R - bgColor.R, 2) + Mathf.Pow(p.G - bgColor.G, 2) + Mathf.Pow(p.B - bgColor.B, 2));
-                    if (diff < 0.2f) img.SetPixel(x, y, new Color(0,0,0,0));
+                    if (diff < 0.2f) img.SetPixel(x, y, new Color(0, 0, 0, 0));
                 }
             }
             rewardSprite.Texture = ImageTexture.CreateFromImage(img);
@@ -266,7 +268,7 @@ public partial class TreasureChest : Area2D
         keyGlow.EmissionShape = CpuParticles2D.EmissionShapeEnum.Sphere;
         keyGlow.EmissionSphereRadius = 25f;
         keyGlow.Gravity = new Vector2(0, -30);
-        keyGlow.Color = new Color(0f, 1f, 1f, 0.9f); 
+        keyGlow.Color = new Color(0f, 1f, 1f, 0.9f);
         _keyVisual.AddChild(keyGlow);
 
         var tween = CreateTween();
@@ -288,17 +290,17 @@ public partial class TreasureChest : Area2D
             flyTween.Chain().TweenCallback(Callable.From(() =>
             {
                 _keyVisual.QueueFree();
-                
+
                 if (GameManager.Instance.CurrentLevel == 1)
                 {
                     // Đã có Popup rồi nên không cần dòng text hiện đè lên nữa
-                    
+
                     GameManager.Instance.UnlockNextSkill();
                     GameManager.Instance.TotalKeys++; // Nhận luôn 1 chìa khóa ở Màn 1
-                    
+
                     // Hiện 2 trang mô tả (Slide)
                     ShowRewardPopups(player);
-                    
+
                     GD.Print("Màn 1: Nhận kỹ năng và chìa khóa xong, hiện popup mô tả.");
                 }
                 else
@@ -430,16 +432,17 @@ public partial class TreasureChest : Area2D
         border.BorderColor = new Color(0.5f, 0.35f, 0.15f); // Màu nâu đậm cổ điển
         border.BorderWidth = 4f;
         panel.AddChild(border);
-        
+
         // Góc trang trí (Gợi ý thị giác)
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++)
+        {
             var corner = new ColorRect();
             corner.Size = new Vector2(20, 20);
             corner.Color = new Color(0.4f, 0.25f, 0.1f);
-            if (i == 0) corner.Position = new Vector2(0,0);
-            if (i == 1) corner.Position = new Vector2(930,0);
-            if (i == 2) corner.Position = new Vector2(0,430);
-            if (i == 3) corner.Position = new Vector2(930,430);
+            if (i == 0) corner.Position = new Vector2(0, 0);
+            if (i == 1) corner.Position = new Vector2(930, 0);
+            if (i == 2) corner.Position = new Vector2(0, 430);
+            if (i == 3) corner.Position = new Vector2(930, 430);
             panel.AddChild(corner);
         }
 
@@ -450,7 +453,7 @@ public partial class TreasureChest : Area2D
         _popupContentLabel.Size = new Vector2(850, 350);
         _popupContentLabel.Position = new Vector2(50, 50);
         _popupContentLabel.AddThemeFontSizeOverride("font_size", 30);
-        _popupContentLabel.AddThemeColorOverride("font_shadow_color", new Color(0,0,0,0.3f));
+        _popupContentLabel.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.3f));
         _popupContentLabel.AddThemeConstantOverride("shadow_offset_x", 2);
         _popupContentLabel.AddThemeConstantOverride("shadow_offset_y", 2);
         panel.AddChild(_popupContentLabel);
@@ -484,12 +487,15 @@ public partial class TreasureChest : Area2D
         UpdatePopupText();
 
         var timer = GetTree().CreateTimer(0.6);
-        timer.Timeout += () => 
+        timer.Timeout += () =>
         {
+            if (!IsInstanceValid(_popupOverlay)) return;
+
             var listener = new Control();
             listener.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
             _popupOverlay.AddChild(listener);
-            listener.GuiInput += (ev) => {
+            listener.GuiInput += (ev) =>
+            {
                 if (ev is InputEventMouseButton mb && mb.Pressed) OnNextSlide();
             };
 
@@ -505,11 +511,11 @@ public partial class TreasureChest : Area2D
         {
             _popupContentLabel.Visible = true;
             _popupInfographic.Visible = false;
-            
+
             string storyText = "CHÌA KHÓA VÀNG ĐÃ ĐƯỢC TÌM THẤY!\n\nChiếc chìa khóa này tỏa ra ánh sáng yếu ớt, như đang dẫn lối.\nCánh cổng đá cổ phía trước dường như cần 3 chìa khóa để mở.\n\n[ Bạn đã có: 1 / 3 ]\nHãy tiếp tục tìm 2 chiếc còn lại trong hang động.";
             _popupContentLabel.Text = storyText;
             _popupContentLabel.AddThemeColorOverride("font_color", new Color(0.25f, 0.15f, 0.05f)); // Màu nâu gỗ sẫm
-            
+
             // Hiệu ứng Đánh máy (Typewriter)
             RunTypewriter(storyText.Length);
         }
@@ -517,13 +523,14 @@ public partial class TreasureChest : Area2D
         {
             _popupContentLabel.Visible = false;
             _popupInfographic.Visible = true;
-            
+
             // Load hình ảnh Infographic người dùng cung cấp (Hỗ trợ cả .jpg và .png)
             var tex = GD.Load<Texture2D>("res://Assets/UI/Skill_J_Info.jpg");
             if (tex == null) tex = GD.Load<Texture2D>("res://Assets/UI/Skill_J_Info.png");
-            
+
             if (tex != null) _popupInfographic.Texture = tex;
-            else {
+            else
+            {
                 // Nếu chưa có file thì hiện thông báo tạm
                 _popupContentLabel.Visible = true;
                 _popupContentLabel.Text = "KỸ NĂNG MỚI: RÌU BAY (Phím J)\n\n[ Vui lòng thêm ảnh Skill_J_Info.png vào Assets/UI ]";
@@ -535,14 +542,14 @@ public partial class TreasureChest : Area2D
     private void RunTypewriter(int length)
     {
         if (_typewriterTween != null) _typewriterTween.Kill();
-        
+
         _popupContentLabel.VisibleCharacters = 0;
         _isTypewriting = true;
 
         _typewriterTween = CreateTween();
         _typewriterTween.TweenProperty(_popupContentLabel, "visible_characters", length, length * 0.05f) // Tốc độ 0.05s/chữ
             .SetTrans(Tween.TransitionType.Linear);
-        
+
         _typewriterTween.Finished += () => _isTypewriting = false;
     }
 

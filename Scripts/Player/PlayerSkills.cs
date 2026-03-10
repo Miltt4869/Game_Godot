@@ -148,12 +148,8 @@ public partial class Player : CharacterBody2D
         margin.AddThemeConstantOverride("margin_top", -40); // BÙ TRỪ KHOẢNG RỖNG: Dùng thông số Âm để giật ngược toàn bộ khung kỹ năng lên trên cao, đâm xuyên lên thanh máu
         _skillPanelLayer.AddChild(margin);
 
-        // ẨN TOÀN BỘ KHUNG KỸ NĂNG Ở MÀN 1 THEO YÊU CẦU
-        // ẨN TOÀN BỘ KHUNG KỸ NĂNG Ở MÀN 1 NẾU CHƯA CÓ KỸ NĂNG NÀO
-        if (GameManager.Instance.CurrentLevel == 1 && GameManager.Instance.UnlockedSkillsCount == 0)
-        {
-            _skillPanelLayer.Visible = false;
-        }
+        // Đảm bảo khung kỹ năng luôn hiện diện để đồng nhất giữa các màn 
+        _skillPanelLayer.Visible = true;
 
         // HBoxContainer tự dồn các nút về góc trên phải
         var hbox = new HBoxContainer();
@@ -230,16 +226,7 @@ public partial class Player : CharacterBody2D
     public void RefreshSkillUI()
     {
         if (_skillPanelLayer == null) return;
-
-        // Hiện lại layer nếu đã có ít nhất 1 kỹ năng (kể cả đang ở màn 1)
-        if (GameManager.Instance.UnlockedSkillsCount > 0)
-        {
-            _skillPanelLayer.Visible = true;
-        }
-        else if (GameManager.Instance.CurrentLevel > 1)
-        {
-            _skillPanelLayer.Visible = true;
-        }
+        _skillPanelLayer.Visible = true;
 
         for (int i = 0; i < 3; i++)
         {

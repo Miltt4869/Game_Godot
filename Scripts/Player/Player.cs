@@ -305,16 +305,19 @@ public partial class Player : CharacterBody2D
     {
         if (_isDead) return;
 
-        // Ưu tiên cao nhất cho nhảy và bị thương
+        // 1. Ưu tiên bị thương
         if (_isHurt)
         {
             PlayAnimationIfNotPlaying("hurt");
             return;
         }
 
+        // 2. Ưu tiên Tấn công (Attack / Spinning) - Cho phép "Nhảy chém" hiện animation
+        if (_isAttacking || _isSpinning) return;
+
         if (!IsOnFloor())
         {
-            // Nếu đang ở trên không thì LUÔN HIỆN animation nhảy/rơi, kể cả khi đang chém (trừ khi xoay rìu skill)
+            // Nếu đang ở trên không thì LUÔN HIỆN animation nhảy/rơi (Trừ khi đang chém đã handle ở trên)
             if (_isSpinning) return;
 
             if (Velocity.Y < 0)
@@ -335,7 +338,7 @@ public partial class Player : CharacterBody2D
             return;
         }
 
-        // Dưới đất: Nếu đang chém thì ưu tiên chém
+        // Dưới đất: Nếu đang chém thì ưu tiên chém (Đã handle ở trên, dòng này để an toàn)
         if (_isAttacking || _isSpinning) return;
         else if (Math.Abs(Velocity.X) > 10f)  // Dùng velocity thực tế thay vì input
         {
