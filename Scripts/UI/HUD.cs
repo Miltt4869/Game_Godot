@@ -26,8 +26,8 @@ public partial class HUD : CanvasLayer
 
     public override void _Process(double delta)
     {
-        // Find player if not found
-        if (_player == null)
+        // Find player if not found or disposed
+        if (!IsInstanceValid(_player))
         {
             var playerNode = GetTree().GetFirstNodeInGroup("player");
             if (playerNode is Player p)
@@ -41,7 +41,8 @@ public partial class HUD : CanvasLayer
 
         if (_pausePanel != null)
         {
-            _pausePanel.Visible = GameManager.Instance.IsPaused;
+            if (_pausePanel.Visible != GameManager.Instance.IsPaused)
+                _pausePanel.Visible = GameManager.Instance.IsPaused;
         }
     }
 

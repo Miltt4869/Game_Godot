@@ -67,9 +67,9 @@ public partial class FallingRockTrap : Node2D
         DrawCircle(Vector2.Zero, RockRadius, new Color(0.24f, 0.20f, 0.16f));
         DrawCircle(new Vector2(-5, -5), RockRadius * 0.8f, new Color(0.35f, 0.28f, 0.20f));
         DrawCircle(new Vector2(-10, -10), RockRadius * 0.4f, new Color(0.45f, 0.38f, 0.26f));
-        
+
         // Móp méo
-        DrawRect(new Rect2(-RockRadius * 0.5f, 0, RockRadius, RockRadius*0.8f), new Color(0.28f, 0.22f, 0.18f));
+        DrawRect(new Rect2(-RockRadius * 0.5f, 0, RockRadius, RockRadius * 0.8f), new Color(0.28f, 0.22f, 0.18f));
     }
 
     private void OnTrigger(Node2D body)
@@ -78,7 +78,7 @@ public partial class FallingRockTrap : Node2D
         {
             _isFalling = true;
             _triggerArea.QueueFree(); // Trigger một lần
-            
+
             // Xoay nhẹ để đá sinh động lúc rớt
             var tw = CreateTween().SetLoops();
             tw.TweenProperty(this, "rotation", Rotation + Mathf.Pi, 1.0f);
@@ -98,7 +98,7 @@ public partial class FallingRockTrap : Node2D
     private void Shatter()
     {
         _isFalling = false;
-        
+
         var cam = GetViewport().GetCamera2D();
         if (cam != null && cam.HasMethod("Shake"))
         {
@@ -107,7 +107,7 @@ public partial class FallingRockTrap : Node2D
 
         _hitArea.QueueFree();
         _dustVfx.Emitting = true;
-        
+
         // Tàn biến nhanh
         var tw = CreateTween();
         tw.TweenProperty(this, "modulate:a", 0f, 0.2f);
@@ -122,8 +122,8 @@ public partial class FallingRockTrap : Node2D
             _velocityY += Gravity * dt;
             Position += new Vector2(0, _velocityY * dt);
 
-            // Chạm đất tự vỡ 
-            if (Position.Y > 580f) // Mặt đất trung bình Level 1
+            // Chạm đất tự vỡ (Tạm thời tăng giới hạn Y để phù hợp với Màn 2 sâu hơn)
+            if (GlobalPosition.Y > 2000f)
             {
                 Shatter();
             }

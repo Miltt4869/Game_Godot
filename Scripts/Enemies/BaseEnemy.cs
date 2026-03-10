@@ -232,12 +232,12 @@ public partial class BaseEnemy : CharacterBody2D
                         {
                             CurrentState = EnemyState.Attack;
                             CreateAttackVFX();
-                            
+
                             // Xử lý lỗi đánh hụt khi người chơi đứng yên: Quét lại HitArea
                             if (AttackArea != null)
                             {
                                 var checkHitTimer = GetTree().CreateTimer(0.1f);
-                                checkHitTimer.Timeout += () => 
+                                checkHitTimer.Timeout += () =>
                                 {
                                     if (!IsInstanceValid(this) || IsQueuedForDeletion() || !IsInstanceValid(AttackArea)) return;
                                     var bodies = AttackArea.GetOverlappingBodies();
@@ -492,6 +492,6 @@ public partial class BaseEnemy : CharacterBody2D
         // Hủy Node sau khi xong xuôi
         var cleanupTween = CreateTween();
         cleanupTween.TweenInterval(0.6f);
-        cleanupTween.TweenCallback(Callable.From(() => slashNode.QueueFree()));
+        cleanupTween.TweenCallback(Callable.From(() => { if (IsInstanceValid(slashNode)) slashNode.QueueFree(); }));
     }
 }

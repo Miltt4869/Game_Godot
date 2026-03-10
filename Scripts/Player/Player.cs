@@ -10,23 +10,24 @@ public partial class Player : CharacterBody2D
     [Export] public float Deceleration = 1000.0f;      // Tốc độ giảm tốc
     [Export] public float AirAcceleration = 600.0f;    // Tăng tốc khi trên không
     [Export] public float AirDeceleration = 400.0f;    // Giảm tốc khi trên không
-    
+
     // Jump - Cải thiện cảm giác nhảy
     [Export] public float JumpVelocity = -380.0f;
     [Export] public float Gravity = 900.0f;
     [Export] public float FallGravityMultiplier = 1.5f;   // Rơi nhanh hơn khi đi xuống
     [Export] public float JumpCutMultiplier = 0.5f;       // Giảm vận tốc khi thả phím nhảy sớm
-    [Export] public float CoyoteTime = 0.12f;             // Thời gian cho phép nhảy sau khi rời nền
-    [Export] public float JumpBufferTime = 0.1f;          // Thời gian buffer nhấn phím nhảy trước khi chạm đất
-    
+    [Export] public float CoyoteTime = 0.15f;             // Tăng nhẹ lên cho dễ nhảy
+    [Export] public float JumpBufferTime = 0.15f;         // Tăng buffer để nhận phím sớm hơn
+
     // Movement state
     private float _coyoteTimer = 0f;
     private float _jumpBufferTimer = 0f;
     private bool _wasOnFloor = false;
     private bool _isJumping = false;
     private bool _hasDoubleJumped = false;                // Thêm: Check nhảy đúp
+    private bool _isHoldJumping = false;                  // Flag cho variable jump height
     private float _facingDirection = 1f;                  // 1 = phải, -1 = trái
-    
+
     // Cutscene / Auto Walk
     private bool _inCutscene = false;
     private float _cutsceneDirection = 0f;
@@ -52,7 +53,7 @@ public partial class Player : CharacterBody2D
     private CollisionShape2D _attackCollision;
     private Timer _attackCooldownTimer;
     private Timer _hurtTimer;
-    
+
     // Audio
     private AudioStreamPlayer _sfxPlayer;
     private AudioStreamPlayer _sfxStepPlayer;
@@ -154,108 +155,119 @@ public partial class Player : CharacterBody2D
         if (!onFloor)
         {
             float gravityThisFrame = Gravity;
-            
+
             // Rơi nhanh hơn khi đang đi xuống hoặc khi thả phím nhảy sớm
             if (velocity.Y > 0)
             {
                 gravityThisFrame *= FallGravityMultiplier;
             }
-            else if (velocity.Y < 0 && !Input.IsActionPressed("jump"))
+            else if (velocity.Y < 0 && Input.IsActionJustReleased("jump"))
             {
-                // Variable jump height - thả phím sớm sẽ nhảy thấp hơn
-                velocity.Y += Gravity * JumpCutMultiplier * dt;
+                // Variable jump height - thả phím sớm sẽ nhảy thấp hơn (Cắt vận tốc ngay lập tức)
+                velocity.Y *= JumpCutMultiplier;
             }
-            
+
             velocity.Y += gravityThisFrame * dt;
-            
+
             // Giới hạn tốc độ rơi tối đa
             velocity.Y = Mathf.Min(velocity.Y, 800f);
         }
 
         // === JUMP - Xử lý nhảy với coyote time và jump buffer ===
-        bool canJump = (_coyoteTimer > 0 || onFloor) && !_isAttacking;
-        if (_jumpBufferTimer > 0)
+        if (_jumpBufferTimer > 0 && !_inCutscene)
         {
-            if (canJump)
+            // THÊM: Nếu đang bị đau (Hurt) mà nhấn nhảy thì cho phép "hồi phục" nhanh (Recovery Jump)
+            if (_isHurt) _isHurt = false;
+
+            // Ưu tiên 1: Nhảy từ dưới đất (hoặc Coyote Time)
+            // THAY ĐỔI: Cho phép nhảy kể cả khi đang tấn công để không bị "khựng" (Jump cancels ground friction)
+            bool canGroundJump = (_coyoteTimer > 0 || onFloor);
+
+            if (canGroundJump)
             {
                 velocity.Y = JumpVelocity;
                 _jumpBufferTimer = 0;
                 _coyoteTimer = 0;
+                _isHoldJumping = true; // Flag để xử lý biến thiên độ cao nhảy
                 _isJumping = true;
-                
-                // Tiếng bật nhảy lần 1
+                _hasDoubleJumped = false;
+
                 _sfxPlayer.Stream = SFX.GetJumpSound();
                 _sfxPlayer.Play();
+
+                // Play animation nhảy nếu không phải đang múa Skill cực mạnh
+                if (!_isSpinning)
+                {
+                    _animatedSprite.Stop();
+                    _animatedSprite.Play("jump");
+                }
             }
-            else if (!_hasDoubleJumped && !_isAttacking)
+            // Ưu tiên 2: Nhảy đúp (Double Jump) khi đang ở trên không
+            else if (!_hasDoubleJumped && !onFloor)
             {
-                // Kích hoạt Nhảy Lần 2 (Double Jump)
-                velocity.Y = JumpVelocity * 0.9f; 
+                velocity.Y = JumpVelocity * 0.95f;
                 _jumpBufferTimer = 0;
                 _hasDoubleJumped = true;
                 _isJumping = true;
+
                 CreateDoubleJumpVFX();
-                
-                // Âm thanh vút sắc hơn lúc đạp gió nén
+
                 _sfxPlayer.Stream = SFX.GetDoubleJumpSound();
                 _sfxPlayer.Play();
-                
-                // Ép play lại animation từ frame đầu bằng cách đổi tạm state
-                _animatedSprite.Stop();
-                PlayAnimationIfNotPlaying("jump");
+
+                if (!_isSpinning)
+                {
+                    _animatedSprite.Stop();
+                    _animatedSprite.Play("jump");
+                }
             }
         }
 
         // === HORIZONTAL MOVEMENT - Di chuyển ngang với acceleration ===
         float direction = _inCutscene ? _cutsceneDirection : Input.GetAxis("move_left", "move_right");
-        
-        if (!_isAttacking || _isSpinning)
-        {
-            float currentAccel;
-            float currentDecel;
-            
-            // Khác biệt acceleration trên không và trên mặt đất
-            if (onFloor)
-            {
-                currentAccel = Acceleration;
-                currentDecel = Deceleration;
-            }
-            else
-            {
-                currentAccel = AirAcceleration;
-                currentDecel = AirDeceleration;
-            }
-            
-            if (Mathf.Abs(direction) > 0.1f)
-            {
-                // Di chuyển - áp dụng acceleration
-                float targetSpeed = direction * Speed;
-                velocity.X = Mathf.MoveToward(velocity.X, targetSpeed, currentAccel * dt);
-                
-                // Cập nhật hướng mặt và sprite
-                _facingDirection = direction > 0 ? 1f : -1f;
-                _animatedSprite.FlipH = direction < 0;
 
-                // Flip attack area theo hướng
-                var attackPos = _attackArea.Position;
-                attackPos.X = _facingDirection * Math.Abs(attackPos.X);
-                _attackArea.Position = attackPos;
-            }
-            else
-            {
-                // Dừng lại - áp dụng deceleration
-                velocity.X = Mathf.MoveToward(velocity.X, 0, currentDecel * dt);
-            }
+        float currentAccel;
+        float currentDecel;
+
+        // Khác biệt acceleration trên không và trên mặt đất
+        if (onFloor)
+        {
+            currentAccel = Acceleration;
+            currentDecel = Deceleration;
         }
         else
         {
-            // Khi đang tấn công, giảm tốc chậm hơn
-            velocity.X = Mathf.MoveToward(velocity.X, 0, Deceleration * 0.3f * dt);
+            currentAccel = AirAcceleration;
+            currentDecel = AirDeceleration;
+        }
+
+        if (Mathf.Abs(direction) > 0.1f)
+        {
+            float targetSpeed = direction * Speed;
+
+            // Nếu đang chém trên đất thì chạy chậm lại một chút để cảm giác có trọng lực/lực cản
+            if (_isAttacking && onFloor) targetSpeed *= 0.8f;
+
+            velocity.X = Mathf.MoveToward(velocity.X, targetSpeed, currentAccel * dt);
+
+            // Cập nhật hướng mặt và sprite
+            _facingDirection = direction > 0 ? 1f : -1f;
+            _animatedSprite.FlipH = direction < 0;
+
+            // Flip attack area theo hướng
+            var attackPos = _attackArea.Position;
+            attackPos.X = _facingDirection * Math.Abs(attackPos.X);
+            _attackArea.Position = attackPos;
+        }
+        else
+        {
+            // Dừng lại - áp dụng deceleration
+            velocity.X = Mathf.MoveToward(velocity.X, 0, currentDecel * dt);
         }
 
         Velocity = velocity;
         MoveAndSlide();
-        
+
         // Khóa giới hạn Map bên trái: Chống chạy lố trượt xuống hố khỏi bản đồ (Map border X >= 0)
         if (GlobalPosition.X < 0)
         {
@@ -292,7 +304,8 @@ public partial class Player : CharacterBody2D
     private void UpdateAnimation(float direction, float dt)
     {
         if (_isDead) return;
-        if (_isAttacking || _isSpinning) return;
+
+        // Ưu tiên cao nhất cho nhảy và bị thương
         if (_isHurt)
         {
             PlayAnimationIfNotPlaying("hurt");
@@ -301,14 +314,15 @@ public partial class Player : CharacterBody2D
 
         if (!IsOnFloor())
         {
-            // Phân biệt animation nhảy lên và rơi xuống
+            // Nếu đang ở trên không thì LUÔN HIỆN animation nhảy/rơi, kể cả khi đang chém (trừ khi xoay rìu skill)
+            if (_isSpinning) return;
+
             if (Velocity.Y < 0)
             {
                 PlayAnimationIfNotPlaying("jump");
             }
             else
             {
-                // Có thể dùng animation "fall" nếu có, không thì dùng "jump"
                 if (_animatedSprite.SpriteFrames != null && _animatedSprite.SpriteFrames.HasAnimation("fall"))
                 {
                     PlayAnimationIfNotPlaying("fall");
@@ -318,11 +332,15 @@ public partial class Player : CharacterBody2D
                     PlayAnimationIfNotPlaying("jump");
                 }
             }
+            return;
         }
+
+        // Dưới đất: Nếu đang chém thì ưu tiên chém
+        if (_isAttacking || _isSpinning) return;
         else if (Math.Abs(Velocity.X) > 10f)  // Dùng velocity thực tế thay vì input
         {
             PlayAnimationIfNotPlaying("run");
-            
+
             // Tính nhịp bước chân Lụp Cụp (Noise Sound Generator)
             _stepTimer -= dt;
             if (_stepTimer <= 0f)
@@ -371,13 +389,13 @@ public partial class Player : CharacterBody2D
 
         // Phân biệt âm thanh nhát chém theo Tần số (Nhát 1, 2 gió vút / Nhát 3 Siêu cực mạnh)
         _sfxPlayer.Stream = SFX.GetAttackSound(_comboIndex + 1);
-        
+
         // Nhát 3 xoay cường công -> âm thanh vỡ rách giòn mạnh -> Screen Shake cho ngầu
-        if (_comboIndex == 2) 
+        if (_comboIndex == 2)
         {
-            _sfxPlayer.VolumeDb = 2f; 
-        } 
-        else 
+            _sfxPlayer.VolumeDb = 2f;
+        }
+        else
         {
             _sfxPlayer.VolumeDb = -4f;
         }
@@ -459,7 +477,7 @@ public partial class Player : CharacterBody2D
 
         // --- CƠ CHẾ SUPER ARMOR (KHÁNG HIỆU ỨNG KHI ĐANG TUNG CHIÊU) ---
         // Khi đang xuất Skill hoặc combo, vẫn nhận sát thương nháy đỏ nhưng KHÔNG bị Ngắt Chiêu hay hất văng
-        if (_isAttacking || _isSpinning) 
+        if (_isAttacking || _isSpinning)
         {
             _animatedSprite.Modulate = new Color(1, 0.3f, 0.3f);
             var tweenArmor = CreateTween();
@@ -472,7 +490,7 @@ public partial class Player : CharacterBody2D
         _comboIndex = 0;      // Reset combo khi bị đánh trúng
         _comboActive = false;
         _hurtTimer.Start();
-        
+
         _animatedSprite.Play("hurt");
         // Red flash effect
         _animatedSprite.Modulate = new Color(1, 0.3f, 0.3f);
@@ -520,7 +538,7 @@ public partial class Player : CharacterBody2D
         _inCutscene = true;
         _cutsceneDirection = direction;
         _isAttacking = false;
-        
+
         // Tạo hiệu ứng Player từ từ bị bóng tối nuốt chửng khi đi sâu vào Hang (Mờ trong 1s)
         var tw = CreateTween();
         tw.TweenProperty(this, "modulate:a", 0f, 1.0f).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
@@ -561,15 +579,15 @@ public partial class DoubleJumpVFX : Node2D
     public override void _Draw()
     {
         // Màu lam trắng của dòng khí chân
-        Color color = new Color(0.6f, 0.95f, 1f, _alpha); 
-        
+        Color color = new Color(0.6f, 0.95f, 1f, _alpha);
+
         // Cung vòng tròn tỏa ra (Shockwave)
         DrawArc(Vector2.Zero, _radius, 0, Mathf.Pi * 2, 24, color, 3f * _alpha, true);
-        
+
         // Tia năng lượng gió cày văng tung toé (5 đường góc rách)
-        for(int i = 0; i < 5; i++)
+        for (int i = 0; i < 5; i++)
         {
-            Vector2 dir = Vector2.Up.Rotated(i * Mathf.Pi / 2.5f + (_radius * 0.02f)); 
+            Vector2 dir = Vector2.Up.Rotated(i * Mathf.Pi / 2.5f + (_radius * 0.02f));
             DrawLine(dir * (_radius * 0.4f), dir * (_radius * 1.5f), color, 4f * _alpha);
         }
     }
