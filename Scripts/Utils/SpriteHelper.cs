@@ -184,6 +184,11 @@ public static class SpriteHelper
         }
 
         _cachedPlayerFrames = BuildSpriteFrames(anims, 12.0f);
+        
+        // Giảm tốc độ animation nhảy/rơi để trông thật hơn (mặc định đang là 12)
+        if (_cachedPlayerFrames.HasAnimation("jump")) _cachedPlayerFrames.SetAnimationSpeed("jump", 8.0f);
+        if (_cachedPlayerFrames.HasAnimation("fall")) _cachedPlayerFrames.SetAnimationSpeed("fall", 8.0f);
+        
         return _cachedPlayerFrames;
     }
 
