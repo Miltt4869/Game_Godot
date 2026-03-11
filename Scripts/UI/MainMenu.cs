@@ -20,6 +20,10 @@ public partial class MainMenu : Control
         // Mặc định trò chơi bật lên sẽ Focus nút Play 
         playButton.GrabFocus();
 
+        // Load trước Intro và Level 1 ngay khi vào Main Menu (ngầm dưới RAM)
+        GameManager.Instance.PreloadScene("res://Scenes/Main/Intro.tscn");
+        GameManager.Instance.PreloadScene("res://Scenes/Levels/Level1.tscn");
+
         // [Tùy chọn] Animation cho TitleLabel (trôi từ trên xuống nhẹ)
         titleLabel.Modulate = new Color(1, 1, 1, 0);
         titleLabel.Position += new Vector2(0, -30);

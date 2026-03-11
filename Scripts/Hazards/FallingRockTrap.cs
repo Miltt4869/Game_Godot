@@ -36,9 +36,14 @@ public partial class FallingRockTrap : Node2D
         _triggerArea.CollisionLayer = 0;
         _triggerArea.CollisionMask = 1; // Player
         var trigShape = new CollisionShape2D();
-        var rect = new RectangleShape2D { Size = new Vector2(RockRadius * 2, TriggerRange) };
+        
+        // Mở rộng bề ngang vùng kích hoạt một cách ngẫu nhiên nhưng VỪA PHẢI
+        // Để người chơi chạy gần tới (hoặc vừa đạp mép) thì đá mới rớt, tạo độ gắt!
+        float randomTriggerWidth = (float)GD.RandRange(60.0, 160.0);
+        var rect = new RectangleShape2D { Size = new Vector2(randomTriggerWidth, TriggerRange) };
         trigShape.Shape = rect;
         trigShape.Position = new Vector2(0, TriggerRange / 2);
+        
         _triggerArea.AddChild(trigShape);
         _triggerArea.BodyEntered += OnTrigger;
         AddChild(_triggerArea);
@@ -79,9 +84,14 @@ public partial class FallingRockTrap : Node2D
             _isFalling = true;
             _triggerArea.QueueFree(); // Trigger một lần
 
-            // Xoay nhẹ để đá sinh động lúc rớt
+            // Random tốc độ rơi ban đầu và trọng lực để người chơi không thể đoán trước timing!
+            _velocityY = (float)GD.RandRange(80.0, 450.0);
+            Gravity = (float)GD.RandRange(1200.0, 2000.0);
+
+            // Xoay nhẹ để đá sinh động lúc rớt (hướng random)
+            float randomRot = (float)GD.RandRange(-Mathf.Pi * 2, Mathf.Pi * 2);
             var tw = CreateTween().SetLoops();
-            tw.TweenProperty(this, "rotation", Rotation + Mathf.Pi, 1.0f);
+            tw.TweenProperty(this, "rotation", Rotation + randomRot, 0.6f);
         }
     }
 

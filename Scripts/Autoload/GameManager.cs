@@ -1,257 +1,210 @@
 using Godot;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public partial class GameManager : Node
 {
-    // Singleton
     public static GameManager Instance { get; private set; }
 
-    // Game State
+    // ── Game State ───────────────────────────────────────────────────────────
     public int Score { get; set; } = 0;
     public int CurrentLevel { get; set; } = 1;
+    public int CurrentCheckpointIndex { get; set; } = 0;
     public int PlayerHealth { get; set; } = 100;
     public int MaxPlayerHealth { get; set; } = 100;
     public bool IsGameOver { get; set; } = false;
     public bool IsPaused { get; set; } = false;
     public bool HasBossKey { get; set; } = false;
     public int TotalKeys { get; set; } = 0;
-    public int UnlockedSkillsCount { get; set; } = 0; // Số kỹ năng đã mở (0, 1, 2, 3)
+    public int UnlockedSkillsCount { get; set; } = 0;
 
-    // Transition UI
+    // ── Transition UI ────────────────────────────────────────────────────────
     private CanvasLayer _transitionLayer;
     private ColorRect _transitionRect;
     private Label _transitionLabel;
+    private ProgressBar _loadingBar;
     private bool _isTransitioning = false;
 
-    // Level paths
     private readonly string[] _levelPaths = {
         "res://Scenes/Levels/Level1.tscn",
         "res://Scenes/Levels/Level2.tscn",
         "res://Scenes/Levels/Level3.tscn"
     };
 
-    // Audio
     private AudioStreamPlayer _bgMusicPlayer;
     private AudioStream _menuMusic;
     private AudioStream _gameplayMusic;
+
+    private string _targetPath = "";
+    private bool _useThreadedLoading = false;
 
     public override void _Ready()
     {
         Instance = this;
         ProcessMode = ProcessModeEnum.Always;
 
-        // Cấu hình âm nhạc toàn cục
         _menuMusic = GD.Load<AudioStream>("res://Assets/sound/little town - orchestral.ogg");
         _gameplayMusic = GD.Load<AudioStream>("res://Assets/sound/toocoolforwordsmix.ogg");
 
-        _bgMusicPlayer = new AudioStreamPlayer();
-        _bgMusicPlayer.VolumeDb = -10.0f;
-        _bgMusicPlayer.Finished += () => _bgMusicPlayer.Play(); // Lặp lại
+        _bgMusicPlayer = new AudioStreamPlayer { VolumeDb = -10.0f };
+        _bgMusicPlayer.Finished += () => _bgMusicPlayer.Play();
         AddChild(_bgMusicPlayer);
 
-        // Tự động thêm Layer chuyển cảnh đen toàn cầu
-        _transitionLayer = new CanvasLayer();
-        _transitionLayer.Layer = 100; // Đảm bảo luôn nằm trên cùng
-
-        _transitionRect = new ColorRect();
-        _transitionRect.Color = new Color(0, 0, 0, 0);
-        _transitionRect.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _transitionRect.MouseFilter = Control.MouseFilterEnum.Ignore;
-
-        _transitionLabel = new Label();
-        _transitionLabel.Text = "Đang tải...";
-        _transitionLabel.HorizontalAlignment = HorizontalAlignment.Center;
-        _transitionLabel.VerticalAlignment = VerticalAlignment.Center;
-        _transitionLabel.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _transitionLabel.AddThemeFontSizeOverride("font_size", 28);
-        _transitionLabel.Visible = false;
-
-        _transitionLayer.AddChild(_transitionRect);
-        _transitionLayer.AddChild(_transitionLabel);
-        AddChild(_transitionLayer);
-
-        // Phát nhạc nếu không phải Intro
+        InitUI();
         CallDeferred(nameof(CheckInitialMusic));
     }
 
-    private void CheckInitialMusic()
+    private void InitUI()
     {
-        string path = GetTree().CurrentScene?.SceneFilePath;
-        if (string.IsNullOrEmpty(path) || path == "res://Scenes/Main/Intro.tscn") return;
+        _transitionLayer = new CanvasLayer { Layer = 100 };
+        
+        _transitionRect = new ColorRect {
+            Color = new Color(0, 0, 0, 0),
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        _transitionRect.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        _transitionLayer.AddChild(_transitionRect);
 
-        bool isGameplay = path.Contains("Scenes/Levels/");
-        PlayBackgroundMusic(isGameplay);
+        var centerContainer = new CenterContainer();
+        centerContainer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        centerContainer.MouseFilter = Control.MouseFilterEnum.Ignore;
+        _transitionLayer.AddChild(centerContainer);
+
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 25);
+        vbox.MouseFilter = Control.MouseFilterEnum.Ignore;
+        centerContainer.AddChild(vbox);
+
+        _transitionLabel = new Label {
+            Text = "Đang tải dữ liệu...",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Visible = false
+        };
+        _transitionLabel.AddThemeFontSizeOverride("font_size", 36);
+        vbox.AddChild(_transitionLabel);
+
+        _loadingBar = new ProgressBar {
+            CustomMinimumSize = new Vector2(500, 15),
+            Visible = false,
+            ShowPercentage = false
+        };
+        
+        var styleBg = new StyleBoxFlat { BgColor = new Color(0.1f, 0.1f, 0.1f, 0.8f), CornerRadiusTopLeft = 5, CornerRadiusTopRight = 5, CornerRadiusBottomLeft = 5, CornerRadiusBottomRight = 5 };
+        var styleFg = new StyleBoxFlat { BgColor = new Color(0.2f, 0.8f, 0.4f, 1.0f), CornerRadiusTopLeft = 5, CornerRadiusTopRight = 5, CornerRadiusBottomLeft = 5, CornerRadiusBottomRight = 5 };
+        _loadingBar.AddThemeStyleboxOverride("background", styleBg);
+        _loadingBar.AddThemeStyleboxOverride("fill", styleFg);
+        vbox.AddChild(_loadingBar);
+
+        AddChild(_transitionLayer);
     }
 
-    public void PlayBackgroundMusic(bool isGameplay)
+    public override void _Process(double delta)
     {
-        AudioStream target = isGameplay ? _gameplayMusic : _menuMusic;
+        if (!_useThreadedLoading || string.IsNullOrEmpty(_targetPath)) return;
 
-        if (_bgMusicPlayer.Stream != target)
+        var progress = new Godot.Collections.Array();
+        var status = ResourceLoader.LoadThreadedGetStatus(_targetPath, progress);
+
+        if (status == ResourceLoader.ThreadLoadStatus.Loaded)
         {
-            _bgMusicPlayer.Stop();
-            _bgMusicPlayer.Stream = target;
+            _useThreadedLoading = false;
+            var packed = (PackedScene)ResourceLoader.LoadThreadedGet(_targetPath);
+            _loadingBar.Value = 100;
+            FinishSwitch(packed);
         }
-
-        if (!_bgMusicPlayer.Playing) _bgMusicPlayer.Play();
+        else if (status == ResourceLoader.ThreadLoadStatus.InProgress && progress.Count > 0)
+        {
+            _loadingBar.Value = (float)progress[0] * 100;
+        }
     }
 
-    public void StopBackgroundMusic()
-    {
-        if (_bgMusicPlayer.Playing) _bgMusicPlayer.Stop();
-    }
-
-    // ── Global Scene Transition ──────────────────────────────────
-    public void ChangeSceneWithTransition(string path, bool showLoading = false)
+    public async void ChangeSceneWithTransition(string path, bool isLevel = true)
     {
         if (_isTransitioning) return;
         _isTransitioning = true;
-
-        // Kiểm tra nhạc nền cho scene sắp tới
-        if (path == "res://Scenes/Main/Intro.tscn")
-        {
-            StopBackgroundMusic();
-        }
-        else
-        {
-            bool isGameplay = path.Contains("Scenes/Levels/");
-            PlayBackgroundMusic(isGameplay);
-        }
+        _targetPath = path;
 
         var tw = CreateTween();
-        // 1. Fade màn hình sang đen (nhanh)
-        tw.TweenProperty(_transitionRect, "color:a", 1.0f, 0.2f)
-          .SetTrans(Tween.TransitionType.Quad)
-          .SetEase(Tween.EaseType.In);
+        tw.TweenProperty(_transitionRect, "color:a", 1.0f, 0.25f);
+        await ToSignal(tw, "finished");
 
-        // 2. Hiện "Đang tải..."
-        tw.TweenCallback(Callable.From(() =>
-        {
-            if (showLoading) _transitionLabel.Visible = true;
-        }));
+        _transitionLabel.Visible = true;
+        _loadingBar.Visible = true;
+        _loadingBar.Value = 0;
 
-        tw.TweenInterval(0.1f); // Cho user nhìn thấy để khỏi tưởng lag
-
-        // 3. Chuyển scene trong khi màn hình vẫn đang đen thui!
-        tw.TweenCallback(Callable.From(() =>
-        {
+        if (isLevel) {
+            _useThreadedLoading = true;
+            ResourceLoader.LoadThreadedRequest(path, "", true);
+        } else {
+            await Task.Delay(300);
             GetTree().ChangeSceneToFile(path);
-        }));
-
-        tw.TweenInterval(0.15f); // Đợi scene mới render frames đầu tiên dưới nền đen
-
-        // 4. Fade từ đen thành trong suốt (hiện scene mới lên)
-        tw.TweenCallback(Callable.From(() =>
-        {
+            _isTransitioning = false;
             _transitionLabel.Visible = false;
-        }));
-        tw.TweenProperty(_transitionRect, "color:a", 0.0f, 0.4f)
-          .SetTrans(Tween.TransitionType.Quad)
-          .SetEase(Tween.EaseType.Out);
+            _loadingBar.Visible = false;
+            var twIn = CreateTween();
+            twIn.TweenProperty(_transitionRect, "color:a", 0.0f, 0.3f);
+        }
+    }
 
+    private async void FinishSwitch(PackedScene packed)
+    {
+        GetTree().ChangeSceneToPacked(packed);
+        for(int i = 0; i < 3; i++) await ToSignal(GetTree(), "process_frame");
+        _transitionLabel.Visible = false;
+        _loadingBar.Visible = false;
+        var tw = CreateTween();
+        tw.TweenProperty(_transitionRect, "color:a", 0.0f, 0.4f);
         tw.TweenCallback(Callable.From(() => { _isTransitioning = false; }));
     }
 
-    public void StartIntro()
-    {
-        Score = 0;
-        CurrentLevel = 1;
-        PlayerHealth = MaxPlayerHealth;
-        IsGameOver = false;
-        ChangeSceneWithTransition("res://Scenes/Main/Intro.tscn", showLoading: false);
-    }
-
-    public void StartGame()
-    {
-        Score = 0;
-        CurrentLevel = 1;
-        PlayerHealth = MaxPlayerHealth;
-        IsGameOver = false;
-        LoadLevel(CurrentLevel);
-    }
-
+    // ── Game Flow Logic ──────────────────────────────────────────────────────
+    public void StartIntro() { ResetStats(); ChangeSceneWithTransition("res://Scenes/Main/Intro.tscn", false); }
+    public void StartGame() => LoadLevel(1);
     public void LoadLevel(int level)
     {
+        if (level > _levelPaths.Length) { WinGame(); return; }
         CurrentLevel = level;
-        if (level > _levelPaths.Length)
-        {
-            WinGame();
-            return;
-        }
-        ChangeSceneWithTransition(_levelPaths[level - 1], showLoading: true);
+        ChangeSceneWithTransition(_levelPaths[level - 1], true);
     }
-
-    public void NextLevel()
-    {
-        CurrentLevel++;
-        LoadLevel(CurrentLevel);
-    }
-
-    public void UnlockNextSkill()
-    {
-        if (UnlockedSkillsCount < 3)
-        {
-            UnlockedSkillsCount++;
-            GD.Print($"Kỹ năng mới đã được mở khóa! Tổng số: {UnlockedSkillsCount}");
-            
-            // Thông báo cho Player để cập nhật UI
-            var player = GetTree().GetFirstNodeInGroup("player") as Player;
-            if (player != null && player.HasMethod("RefreshSkillUI"))
-            {
-                player.Call("RefreshSkillUI");
-            }
-        }
-    }
-
-    public void AddScore(int points) => Score += points;
-
-    public void PlayerTakeDamage(int damage)
-    {
-        PlayerHealth -= damage;
-        if (PlayerHealth <= 0)
-        {
-            PlayerHealth = 0;
-            GameOver();
-        }
-    }
-
-    public void HealPlayer(int amount) => PlayerHealth = Math.Min(PlayerHealth + amount, MaxPlayerHealth);
-
-    public void GameOver()
-    {
-        IsGameOver = true;
-        ChangeSceneWithTransition("res://Scenes/Main/GameOver.tscn", showLoading: false);
-    }
-
-    public void WinGame()
-    {
-        ChangeSceneWithTransition("res://Scenes/Main/WinScreen.tscn", showLoading: false);
-    }
-
-    public void GoToMainMenu()
-    {
-        IsGameOver = false;
-        Score = 0;
-        CurrentLevel = 1;
-        PlayerHealth = MaxPlayerHealth;
-        ChangeSceneWithTransition("res://Scenes/Main/MainMenu.tscn", showLoading: false);
-    }
-
     public void RestartLevel()
     {
+        // ✅ QUAN TRỌNG: Reset máu và trạng thái thua trước khi chơi lại
         PlayerHealth = MaxPlayerHealth;
         IsGameOver = false;
         LoadLevel(CurrentLevel);
     }
 
-    public override void _Input(InputEvent @event)
-    {
-        if (@event.IsActionPressed("pause")) TogglePause();
-    }
+    public void NextLevel() { CurrentLevel++; LoadLevel(CurrentLevel); }
+    public void GameOver() { IsGameOver = true; ChangeSceneWithTransition("res://Scenes/Main/GameOver.tscn", false); }
+    public void WinGame() => ChangeSceneWithTransition("res://Scenes/Main/WinScreen.tscn", false);
+    public void GoToMainMenu() { IsGameOver = false; ChangeSceneWithTransition("res://Scenes/Main/MainMenu.tscn", false); }
 
-    public void TogglePause()
-    {
-        IsPaused = !IsPaused;
-        GetTree().Paused = IsPaused;
+    private void ResetStats() 
+    { 
+        Score = 0; 
+        CurrentLevel = 1; 
+        CurrentCheckpointIndex = 0; 
+        PlayerHealth = MaxPlayerHealth; 
+        IsGameOver = false; 
+        UnlockedSkillsCount = 0; 
+        HasBossKey = false;
+        TotalKeys = 0;
     }
+    
+    // ── Required Utilities (FIX MISSING METHODS) ─────────────────────────────
+    public void PreloadScene(string path) { ResourceLoader.LoadThreadedRequest(path, "", true); }
+    public void StopBackgroundMusic() => _bgMusicPlayer.Stop();
+    public void UnlockNextSkill() { if (UnlockedSkillsCount < 3) (GetTree().GetFirstNodeInGroup("player"))?.Call("RefreshSkillUI"); }
+    public void AddScore(int p) => Score += p;
+    public void PlayerTakeDamage(int d) { PlayerHealth -= d; if (PlayerHealth <= 0) GameOver(); }
+    public void HealPlayer(int a) => PlayerHealth = Math.Min(PlayerHealth + a, MaxPlayerHealth);
+    public void PlayBackgroundMusic(bool isG) { 
+        AudioStream t = isG ? _gameplayMusic : _menuMusic;
+        if (_bgMusicPlayer.Stream != t) { _bgMusicPlayer.Stop(); _bgMusicPlayer.Stream = t; }
+        if (!_bgMusicPlayer.Playing) _bgMusicPlayer.Play();
+    }
+    private void CheckInitialMusic() { string p = GetTree().CurrentScene?.SceneFilePath; if (!string.IsNullOrEmpty(p)) PlayBackgroundMusic(p.Contains("Scenes/Levels/")); }
+    public override void _Input(InputEvent e) { if (e.IsActionPressed("pause")) TogglePause(); }
+    public void TogglePause() { IsPaused = !IsPaused; GetTree().Paused = IsPaused; }
 }

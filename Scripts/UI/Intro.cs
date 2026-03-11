@@ -8,6 +8,8 @@ public partial class Intro : Control
 	private Texture2D[] _bgTextures;
 	private AudioStreamPlayer _audioPlayer;
 	private AudioStreamPlayer _musicPlayer;
+	private Button _skipButton;
+	private SceneTreeTimer _nextSlideTimer;
 
 	private int _currentLine = 0;
 	private float _timer = 0;
@@ -35,11 +37,46 @@ public partial class Intro : Control
 
 		_bgRect.Modulate = new Color(1, 1, 1, 0);
 
+		// ✅ PRELOAD LEVEL 1 TỪ SỚM khi Intro chạy
+		// Như vậy khi nhấn BỎ QUA, cấp sẽ đã load xong → vào game ngay tức thì!
+		GameManager.Instance.PreloadScene("res://Scenes/Levels/Level1.tscn");
+
 		// Phát lời thoại
 		_audioPlayer.Play();
 
 		// Bắt đầu chuỗi chuyển cảnh
 		ShowNextLine();
+
+		// ── TẠO NÚT BỎ QUA (SKIP) BẰNG CODE ────────────────────────
+		_skipButton = new Button();
+		_skipButton.Text = "BỎ QUA >>";
+		_skipButton.CustomMinimumSize = new Vector2(150, 50);
+		
+		// Căn vị trí góc trên bên phải
+		_skipButton.SetPosition(new Vector2(1152 - 170, 20)); 
+
+		// Style cho nút (Nền đen mờ, bo tròn)
+		var styleNormal = new StyleBoxFlat();
+		styleNormal.BgColor = new Color(0, 0, 0, 0.4f);
+		styleNormal.SetCornerRadiusAll(10);
+		styleNormal.ExpandMarginLeft = 10;
+		styleNormal.ExpandMarginRight = 10;
+		
+		var styleHover = (StyleBoxFlat)styleNormal.Duplicate();
+		styleHover.BgColor = new Color(0.2f, 0.2f, 0.2f, 0.6f);
+
+		_skipButton.AddThemeStyleboxOverride("normal", styleNormal);
+		_skipButton.AddThemeStyleboxOverride("hover", styleHover);
+		_skipButton.AddThemeStyleboxOverride("pressed", styleHover);
+		_skipButton.AddThemeFontSizeOverride("font_size", 20);
+		
+		_skipButton.Pressed += StartGame;
+		AddChild(_skipButton);
+
+		// Hiệu ứng nút nhấp nháy nhẹ để thu hút sự chú ý
+		var skipTw = CreateTween().SetLoops();
+		skipTw.TweenProperty(_skipButton, "modulate:a", 0.7f, 0.8f);
+		skipTw.TweenProperty(_skipButton, "modulate:a", 1.0f, 0.8f);
 	}
 
 	public override void _Process(double delta)
@@ -55,10 +92,22 @@ public partial class Intro : Control
 		}
 	}
 
-	public override void _Input(InputEvent @event) { }
+	public override void _Input(InputEvent @event)
+	{
+		// Cho phép bỏ qua Intro bằng phím ESC, SPACE, hoặc Enter
+		if (@event.IsActionPressed("ui_cancel") || @event.IsActionPressed("ui_accept") || @event.IsActionPressed("jump"))
+		{
+			GetViewport().SetInputAsHandled();
+			StartGame();
+		}
+	}
 
 	private void ShowNextLine()
 	{
+		// Kiểm tra an toàn: Nếu màn hình Intro đã bị đóng (do bấm Skip hoặc hết giờ) 
+		// thì không chạy tiếp logic chuyển cảnh nữa để tránh crash.
+		if (!IsInstanceValid(this) || _bgRect == null || !IsInstanceValid(_bgRect)) return;
+
 		if (_currentLine >= _lineDurations.Length) return;
 
 		float duration = _lineDurations[_currentLine];
@@ -79,11 +128,18 @@ public partial class Intro : Control
 		}
 
 		// Tự động chuyển slide theo thời gian đã định
-		GetTree().CreateTimer(duration).Timeout += () => ShowNextLine();
+		_nextSlideTimer = GetTree().CreateTimer(duration);
+		_nextSlideTimer.Timeout += () => ShowNextLine();
 	}
 
 	private void StartGame()
 	{
+		if (!IsInstanceValid(this)) return;
+		
+		// Dừng nhạc và hội thoại ngay lập tức
+		if (_audioPlayer != null && _audioPlayer.Playing) _audioPlayer.Stop();
+		if (_musicPlayer != null && _musicPlayer.Playing) _musicPlayer.Stop();
+
 		SetProcess(false);
 		GameManager.Instance.StartGame();
 	}

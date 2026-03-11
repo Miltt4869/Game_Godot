@@ -11,7 +11,6 @@ public partial class LevelManager : Node2D
     private Player _player;
 
     private List<Vector2> _checkpoints = new List<Vector2>();
-    private int _currentCheckpoint = 0;
 
     public override void _Ready()
     {
@@ -35,6 +34,37 @@ public partial class LevelManager : Node2D
         if (LevelNumber == 1)
         {
             SpawnLevel1CustomTraps();
+        }
+
+        // Tự động biến các cục đá trang trí ở giữa đường thành chướng ngại vật (vật cản)
+        MakeRocksSolidObstacles();
+    }
+
+    private void MakeRocksSolidObstacles()
+    {
+        foreach (Node child in GetChildren())
+        {
+            if (child is Sprite2D sprite && sprite.Name.ToString().StartsWith("Rock_D"))
+            {
+                // Kéo rock lên lớp z_index cao hơn để đứng ngang hàng với Player (-1 thay vì -11)
+                sprite.ZIndex = -1;
+
+                // Tạo vật lý cản đường (Environment layer = 2)
+                var staticBody = new StaticBody2D();
+                staticBody.CollisionLayer = 2; 
+                
+                var collisionShape = new CollisionShape2D();
+                var circleShape = new CircleShape2D();
+                // Bán kính hình tròn cản (rock texture lớn, scale 0.3 -> effective radius ~ 35-40px)
+                circleShape.Radius = 140f; 
+                collisionShape.Shape = circleShape;
+                
+                // Tâm của đá hơi nhích xuống dưới một chút để Player có thể nhảy lên hoặc đụng cạnh chặn lại
+                collisionShape.Position = new Vector2(0, 30f); 
+
+                staticBody.AddChild(collisionShape);
+                sprite.AddChild(staticBody);
+            }
         }
     }
 
@@ -72,8 +102,10 @@ public partial class LevelManager : Node2D
 
     private void SpawnPlayer()
     {
-        Vector2 spawnPos = _checkpoints.Count > _currentCheckpoint
-            ? _checkpoints[_currentCheckpoint]
+        int checkpointIndex = GameManager.Instance.CurrentCheckpointIndex;
+
+        Vector2 spawnPos = _checkpoints.Count > checkpointIndex
+            ? _checkpoints[checkpointIndex]
             : (_spawnPoint?.GlobalPosition ?? Vector2.Zero);
 
         if (PlayerScene != null)
@@ -92,9 +124,10 @@ public partial class LevelManager : Node2D
 
     public void ActivateCheckpoint(int index)
     {
-        if (index > _currentCheckpoint && index < _checkpoints.Count)
+        if (index > GameManager.Instance.CurrentCheckpointIndex && index < _checkpoints.Count)
         {
-            _currentCheckpoint = index;
+            GameManager.Instance.CurrentCheckpointIndex = index;
+            GD.Print($"Đã lưu Checkpoint: {index}");
         }
     }
 
@@ -110,7 +143,7 @@ public partial class LevelManager : Node2D
     public override void _Process(double delta)
     {
         if (_player == null || _player.IsQueuedForDeletion()) return;
-        for (int i = _currentCheckpoint + 1; i < _checkpoints.Count; i++)
+        for (int i = GameManager.Instance.CurrentCheckpointIndex + 1; i < _checkpoints.Count; i++)
         {
             if (Mathf.Abs(_player.GlobalPosition.X - _checkpoints[i].X) < 60f)
             {
