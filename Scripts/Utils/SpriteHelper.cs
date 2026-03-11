@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public static class SpriteHelper
 {
@@ -607,6 +608,126 @@ public static class SpriteHelper
             {"walk", new[] { frames[0] }}, {"attack", new[] { frames[1] }},
             {"hurt", new[] { frames[2] }}, {"die", new[] { frames[3] }}
         });
+    }
+
+    public static SpriteFrames CreateChanTinhSpriteFrames()
+    {
+        var anims = new Dictionary<string, Texture2D[]>();
+        int outSize = 512;
+
+        // Thu thập tất cả các ảnh để tính toán Bounding Box chung
+        var allImages = new Dictionary<string, List<Image>>();
+        var allBounds = new List<Rect2I>();
+
+        // 1. Load Idle
+        var idleImgs = new List<Image>();
+        var imgIdle = LoadAndCleanImage("res://Assets/Sprites/Enemies/ChanTinh/B_dung.jpeg");
+        if (imgIdle != null) { idleImgs.Add(imgIdle); allBounds.Add(FindBounds(imgIdle)); }
+        allImages["idle"] = idleImgs;
+
+        // 2. Load Run
+        var runImgs = new List<Image>();
+        for (int i = 1; i <= 8; i++)
+        {
+            if (i == 5) continue;
+            var img = LoadAndCleanImage($"res://Assets/Sprites/Enemies/ChanTinh/B_run{i}.png");
+            if (img != null) { runImgs.Add(img); allBounds.Add(FindBounds(img)); }
+        }
+        allImages["run"] = runImgs;
+
+        // 3. Load Special Attacks
+        string folder = "res://Assets/Sprites/Enemies/ChanTinh/";
+        var attackFrames = new Dictionary<string, string>();
+        attackFrames["prep1"] = folder + "attack_prepare_1.png";
+        attackFrames["prep2"] = folder + "attack_prepare_2.png";
+        attackFrames["ready"] = folder + "attack_ready.png";
+        attackFrames["slash"] = folder + "attack_slash.png";
+        attackFrames["end"] = folder + "attack_end.png";
+        attackFrames["smash1"] = folder + "attack_smash.png";
+        attackFrames["smash2"] = folder + "attack_smash2.png";
+        attackFrames["grnd_smash"] = folder + "ground_smash.png";
+        attackFrames["spin"] = folder + "attack_spin.png";
+        attackFrames["d_spin"] = folder + "attack_double_spin.png";
+        attackFrames["fire_p"] = folder + "fire_prepare.png";
+        attackFrames["fire_s"] = folder + "fire_start.png";
+        attackFrames["fire_b"] = folder + "fire_breath.png";
+        attackFrames["jump_a"] = folder + "jump_attack.png";
+        attackFrames["light_a"] = folder + "lightning_attack.png";
+        attackFrames["power"] = folder + "power_charge.png";
+
+        var loadedAttacks = new Dictionary<string, Image>();
+        foreach (var kv in attackFrames)
+        {
+            var img = LoadAndCleanImage(kv.Value);
+            if (img != null)
+            {
+                loadedAttacks[kv.Key] = img;
+                allBounds.Add(FindBounds(img));
+            }
+        }
+
+        // Helper to get image if exists
+        System.Func<string, Image> getImg = (key) => loadedAttacks.ContainsKey(key) ? loadedAttacks[key] : null;
+
+        // Định nghĩa các chuỗi chiêu thức
+        allImages["attack_melee"] = new List<Image> { getImg("prep1"), getImg("ready"), getImg("slash"), getImg("end") };
+        allImages["attack_smash"] = new List<Image> { getImg("prep2"), getImg("smash1"), getImg("smash2"), getImg("grnd_smash"), getImg("end") };
+        allImages["attack_spin"] = new List<Image> { getImg("prep1"), getImg("spin"), getImg("d_spin"), getImg("end") };
+        allImages["attack_fire"] = new List<Image> { getImg("fire_p"), getImg("fire_s"), getImg("fire_b"), getImg("end") };
+        allImages["attack_jump"] = new List<Image> { getImg("prep1"), getImg("jump_a"), getImg("end") };
+        allImages["attack_lightning"] = new List<Image> { getImg("prep1"), getImg("ready"), getImg("light_a"), getImg("end") };
+        allImages["power_up"] = new List<Image> { getImg("power"), getImg("power"), getImg("power") };
+
+        // Clean up: remove nulls from any list in allImages
+        foreach (var key in allImages.Keys.ToList())
+        {
+            allImages[key].RemoveAll(i => i == null);
+        }
+
+        // 4. Tính toán Unified Scale (Tìm frame to nhất để làm chuẩn)
+        int maxW = 50, maxH = 50;
+        foreach (var b in allBounds)
+        {
+            if (b.Size.X > maxW) maxW = b.Size.X;
+            if (b.Size.Y > maxH) maxH = b.Size.Y;
+        }
+
+        float unifiedScale = 1.0f;
+        int limit = outSize - 40;
+        if (maxW > limit || maxH > limit)
+        {
+            unifiedScale = Math.Min((float)limit / maxW, (float)limit / maxH);
+        }
+
+        // 4. Tạo Texture với tỉ lệ thống nhất
+        foreach (var entry in allImages)
+        {
+            var textures = new List<Texture2D>();
+            for (int i = 0; i < entry.Value.Count; i++)
+            {
+                var img = entry.Value[i];
+                // Tìm bounds của chính frame đó nhưng dùng unifiedScale để đảm bảo không bị phóng to tùy tiện
+                var b = FindBounds(img);
+                textures.Add(SmartPad(img, b, outSize, outSize, unifiedScale));
+            }
+            if (textures.Count > 0) anims[entry.Key] = textures.ToArray();
+        }
+
+        // Fallbacks
+        if (!anims.ContainsKey("idle") && anims.ContainsKey("run")) anims["idle"] = new[] { anims["run"][0] };
+        if (!anims.ContainsKey("run") && anims.ContainsKey("idle")) anims["run"] = anims["idle"];
+        
+        string[] standard = { "walk", "attack", "hurt", "die" };
+        foreach (var s in standard)
+        {
+            if (s == "walk") anims["walk"] = anims.ContainsKey("run") ? anims["run"] : anims["idle"];
+            else if (!anims.ContainsKey(s))
+            {
+                if (anims.ContainsKey("idle")) anims[s] = anims["idle"];
+            }
+        }
+
+        return BuildSpriteFrames(anims, 6.0f);
     }
 
     public static SpriteFrames CreatePrincessSpriteFrames()

@@ -22,6 +22,11 @@ public partial class LevelManager : Node2D
             GameManager.Instance.UnlockedSkillsCount = 0;
             GD.Print("Level 1: Reset UnlockedSkillsCount to 0");
         }
+        else if (LevelNumber == 4)
+        {
+            GameManager.Instance.UnlockedSkillsCount = 3;
+            GD.Print("Level 4: Unlock all skills (JKL)");
+        }
 
         if (HasNode("SpawnPoint"))
             _spawnPoint = GetNode<Node2D>("SpawnPoint");
@@ -114,6 +119,11 @@ public partial class LevelManager : Node2D
             _player.GlobalPosition = spawnPos;
             _player.AddToGroup("player");
             AddChild(_player);
+            
+            if (LevelNumber == 4)
+            {
+                _player.Call("RefreshSkillUI");
+            }
         }
     }
 

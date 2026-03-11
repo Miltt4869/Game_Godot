@@ -29,7 +29,8 @@ public partial class GameManager : Node
     private readonly string[] _levelPaths = {
         "res://Scenes/Levels/Level1.tscn",
         "res://Scenes/Levels/Level2.tscn",
-        "res://Scenes/Levels/Level3.tscn"
+        "res://Scenes/Levels/Level3.tscn",
+        "res://Scenes/Levels/Level4.tscn"
     };
 
     private AudioStreamPlayer _bgMusicPlayer;

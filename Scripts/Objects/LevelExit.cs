@@ -50,8 +50,8 @@ public partial class LevelExit : Area2D
         
         if (body is Player)
         {
-            GD.Print("Chúc mừng! Bạn đã thoát khỏi hang động!");
-            GameManager.Instance.WinGame();
+            GD.Print("Chúc mừng! Bạn đã hoàn thành level!");
+            GameManager.Instance.NextLevel();
         }
     }
 }

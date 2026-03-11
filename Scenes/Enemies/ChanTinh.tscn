@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=3 uid="uid://chantinh001"]
+
+[ext_resource type="Script" path="res://Scripts/Enemies/ChanTinh.cs" id="1"]
+[ext_resource type="PackedScene" uid="uid://bosskey001" path="res://Scenes/Items/BossKey.tscn" id="2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_chantinh"]
+size = Vector2(60, 180)
+
+[node name="ChanTinh" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1")
+KeyScene = ExtResource("2")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -90)
+shape = SubResource("RectangleShape2D_chantinh")
+
+[node name="DetectArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DetectArea"]
+position = Vector2(0, -90)
+shape = SubResource("RectangleShape2D_chantinh")
+
+[node name="HitArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HitArea"]
+position = Vector2(0, -90)
+shape = SubResource("RectangleShape2D_chantinh")
