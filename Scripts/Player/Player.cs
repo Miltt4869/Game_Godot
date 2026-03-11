@@ -441,6 +441,8 @@ public partial class Player : CharacterBody2D
     {
         if (_animatedSprite.Animation == "die")
         {
+            // Reset time scale before signaling death
+            Engine.TimeScale = 1.0f;
             EmitSignal(SignalName.PlayerDied);
         }
     }
@@ -524,9 +526,22 @@ public partial class Player : CharacterBody2D
     private void Die()
     {
         _isDead = true;
-        _animatedSprite.Stop();
-        _animatedSprite.Play("die");
         
+        // --- Hiệu ứng Slow Motion Chuyên Nghiệp ---
+        // 1. Dừng hình nhẹ (Hitstop) để cảm nhận cú đánh chí mạng
+        Engine.TimeScale = 0.05f; 
+        
+        // 2. Sau 0.1s thì bắt đầu diễn hoạt chậm (Cinematic Slowmo)
+        var timer = GetTree().CreateTimer(0.1, true, false, true); // true cho process_always (quan trọng khi timescale thấp)
+        timer.Timeout += () => 
+        {
+            if (!IsInstanceValid(this)) return;
+            Engine.TimeScale = 0.4f; // Chậm lại còn 40% tốc độ thực
+            _animatedSprite.Stop();
+            _animatedSprite.SpeedScale = 0.8f; // Làm cho animation chính nó cũng chậm hơn một chút nữa
+            _animatedSprite.Play("die");
+        };
+
         // Disable collision immediately so player can't interact while dying
         GetNode<CollisionShape2D>("CollisionShape2D").SetDeferred("disabled", true);
     }
