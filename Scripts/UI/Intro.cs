@@ -15,6 +15,7 @@ public partial class Intro : Control
 	private float _timer = 0;
 	private float _totalDuration = 48f;
 	private float _introTimer = 0f;
+	private const float IntroSpeedMultiplier = 1.25f;
 
 	// Thời lượng hiển thị cho từng câu (giây) để chuyển Scene nền khớp với giọng đọc
 	private float[] _lineDurations = new float[] { 6.8f, 6.5f, 6.5f, 6.5f, 6.5f, 6.5f, 8.0f };
@@ -27,6 +28,8 @@ public partial class Intro : Control
 
 		// Lặp lại nhạc nền
 		_musicPlayer.Finished += () => _musicPlayer.Play();
+		_audioPlayer.PitchScale = IntroSpeedMultiplier;
+		_musicPlayer.PitchScale = IntroSpeedMultiplier;
 
 		// Load 6 hình nền cho Intro
 		_bgTextures = new Texture2D[6];
@@ -51,9 +54,9 @@ public partial class Intro : Control
 		_skipButton = new Button();
 		_skipButton.Text = "BỎ QUA >>";
 		_skipButton.CustomMinimumSize = new Vector2(150, 50);
-		
+
 		// Căn vị trí góc trên bên phải
-		_skipButton.SetPosition(new Vector2(1152 - 170, 20)); 
+		_skipButton.SetPosition(new Vector2(1152 - 170, 20));
 
 		// Style cho nút (Nền đen mờ, bo tròn)
 		var styleNormal = new StyleBoxFlat();
@@ -61,7 +64,7 @@ public partial class Intro : Control
 		styleNormal.SetCornerRadiusAll(10);
 		styleNormal.ExpandMarginLeft = 10;
 		styleNormal.ExpandMarginRight = 10;
-		
+
 		var styleHover = (StyleBoxFlat)styleNormal.Duplicate();
 		styleHover.BgColor = new Color(0.2f, 0.2f, 0.2f, 0.6f);
 
@@ -69,14 +72,14 @@ public partial class Intro : Control
 		_skipButton.AddThemeStyleboxOverride("hover", styleHover);
 		_skipButton.AddThemeStyleboxOverride("pressed", styleHover);
 		_skipButton.AddThemeFontSizeOverride("font_size", 20);
-		
+
 		_skipButton.Pressed += StartGame;
 		AddChild(_skipButton);
 
 		// Hiệu ứng nút nhấp nháy nhẹ để thu hút sự chú ý
 		var skipTw = CreateTween().SetLoops();
-		skipTw.TweenProperty(_skipButton, "modulate:a", 0.7f, 0.8f);
-		skipTw.TweenProperty(_skipButton, "modulate:a", 1.0f, 0.8f);
+		skipTw.TweenProperty(_skipButton, "modulate:a", 0.7f, 0.8f / IntroSpeedMultiplier);
+		skipTw.TweenProperty(_skipButton, "modulate:a", 1.0f, 0.8f / IntroSpeedMultiplier);
 	}
 
 	public override void _Process(double delta)
@@ -86,7 +89,7 @@ public partial class Intro : Control
 		_introTimer += dt;
 
 		// Nếu hết tiếng hoặc hết thời gian thì vào game
-		if (_introTimer >= _totalDuration || (_introTimer > 5f && !_audioPlayer.Playing))
+		if (_introTimer >= (_totalDuration / IntroSpeedMultiplier) || (_introTimer > (5f / IntroSpeedMultiplier) && !_audioPlayer.Playing))
 		{
 			StartGame();
 		}
@@ -110,7 +113,7 @@ public partial class Intro : Control
 
 		if (_currentLine >= _lineDurations.Length) return;
 
-		float duration = _lineDurations[_currentLine];
+		float duration = _lineDurations[_currentLine] / IntroSpeedMultiplier;
 
 		// 6 ảnh cho 7 đoạn thoại -> đoạn cuối giữ nguyên ảnh cuối
 		int bgIndex = Math.Min(_currentLine, 5);
@@ -122,9 +125,9 @@ public partial class Intro : Control
 		if (_bgRect.Texture != nextBg)
 		{
 			var bgTw = CreateTween();
-			bgTw.TweenProperty(_bgRect, "modulate:a", 0.5f, 0.5f);
+			bgTw.TweenProperty(_bgRect, "modulate:a", 0.5f, 0.5f / IntroSpeedMultiplier);
 			bgTw.TweenCallback(Callable.From(() => _bgRect.Texture = nextBg));
-			bgTw.TweenProperty(_bgRect, "modulate:a", 1.0f, 1.0f);
+			bgTw.TweenProperty(_bgRect, "modulate:a", 1.0f, 1.0f / IntroSpeedMultiplier);
 		}
 
 		// Tự động chuyển slide theo thời gian đã định
@@ -135,7 +138,7 @@ public partial class Intro : Control
 	private void StartGame()
 	{
 		if (!IsInstanceValid(this)) return;
-		
+
 		// Dừng nhạc và hội thoại ngay lập tức
 		if (_audioPlayer != null && _audioPlayer.Playing) _audioPlayer.Stop();
 		if (_musicPlayer != null && _musicPlayer.Playing) _musicPlayer.Stop();
