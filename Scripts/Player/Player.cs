@@ -31,6 +31,8 @@ public partial class Player : CharacterBody2D
     // Cutscene / Auto Walk
     private bool _inCutscene = false;
     private float _cutsceneDirection = 0f;
+    private bool _tutorialLockActive = false;
+    private string _tutorialExpectedAction = "";
 
     // Combat
     [Export] public int AttackDamage = 25;
@@ -142,7 +144,7 @@ public partial class Player : CharacterBody2D
         }
 
         // === JUMP BUFFER - Ghi nhớ input nhảy ===
-        if (Input.IsActionJustPressed("jump") && !_inCutscene)
+        if (Input.IsActionJustPressed("jump") && !_inCutscene && IsActionAllowedByTutorial("jump"))
         {
             _jumpBufferTimer = JumpBufferTime;
         }
@@ -225,6 +227,7 @@ public partial class Player : CharacterBody2D
 
         // === HORIZONTAL MOVEMENT - Di chuyển ngang với acceleration ===
         float direction = _inCutscene ? _cutsceneDirection : Input.GetAxis("move_left", "move_right");
+        if (!IsActionAllowedByTutorial("move")) direction = 0f;
 
         float currentAccel;
         float currentDecel;
@@ -289,7 +292,7 @@ public partial class Player : CharacterBody2D
         }
 
         // Attack on click / key press
-        if (Input.IsActionJustPressed("attack") && _canAttack && !_isHurt && !_inCutscene)
+        if (Input.IsActionJustPressed("attack") && _canAttack && !_isHurt && !_inCutscene && IsActionAllowedByTutorial("attack"))
         {
             Attack();
         }
@@ -470,6 +473,7 @@ public partial class Player : CharacterBody2D
 
     public void TakeDamage(int damage)
     {
+        if (GameManager.Instance != null && GameManager.Instance.IsTutorialRunning) return;
         if (_isDead || _isHurt) return;
 
         _health -= damage;
@@ -526,14 +530,14 @@ public partial class Player : CharacterBody2D
     private void Die()
     {
         _isDead = true;
-        
+
         // --- Hiệu ứng Slow Motion Chuyên Nghiệp ---
         // 1. Dừng hình nhẹ (Hitstop) để cảm nhận cú đánh chí mạng
-        Engine.TimeScale = 0.05f; 
-        
+        Engine.TimeScale = 0.05f;
+
         // 2. Sau 0.1s thì bắt đầu diễn hoạt chậm (Cinematic Slowmo)
         var timer = GetTree().CreateTimer(0.1, true, false, true); // true cho process_always (quan trọng khi timescale thấp)
-        timer.Timeout += () => 
+        timer.Timeout += () =>
         {
             if (!IsInstanceValid(this)) return;
             Engine.TimeScale = 0.4f; // Chậm lại còn 40% tốc độ thực
@@ -552,16 +556,16 @@ public partial class Player : CharacterBody2D
         _isHurt = false;
         _health = GameManager.Instance.MaxPlayerHealth;
         GameManager.Instance.PlayerHealth = _health;
-        
+
         // Reset physics
         Velocity = Vector2.Zero;
         Engine.TimeScale = 1.0f;
         _animatedSprite.SpeedScale = 1.0f;
         _animatedSprite.Modulate = Colors.White;
-        
+
         // Bật lại collision
         GetNode<CollisionShape2D>("CollisionShape2D").SetDeferred("disabled", false);
-        
+
         PlayAnimationIfNotPlaying("idle");
         EmitSignal(SignalName.HealthChanged, _health, GameManager.Instance.MaxPlayerHealth);
     }
@@ -575,6 +579,31 @@ public partial class Player : CharacterBody2D
         // Tạo hiệu ứng Player từ từ bị bóng tối nuốt chửng khi đi sâu vào Hang (Mờ trong 1s)
         var tw = CreateTween();
         tw.TweenProperty(this, "modulate:a", 0f, 1.0f).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+    }
+
+    public void SetTutorialExpectedAction(string expectedAction)
+    {
+        _tutorialLockActive = true;
+        _tutorialExpectedAction = expectedAction;
+    }
+
+    public void ClearTutorialLock()
+    {
+        _tutorialLockActive = false;
+        _tutorialExpectedAction = "";
+    }
+
+    private bool IsActionAllowedByTutorial(string action)
+    {
+        if (!_tutorialLockActive) return true;
+
+        return _tutorialExpectedAction switch
+        {
+            "move_jump" => action == "move" || action == "jump",
+            "attack" => action == "move" || action == "jump" || action == "attack",
+            "skill" => true,
+            _ => true,
+        };
     }
 
     private void CreateDoubleJumpVFX()

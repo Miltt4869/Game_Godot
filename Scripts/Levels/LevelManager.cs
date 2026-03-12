@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public partial class LevelManager : Node2D
 {
@@ -9,6 +10,7 @@ public partial class LevelManager : Node2D
     private Node2D _spawnPoint;
     private HUD _hud;
     private Player _player;
+    private TutorialManager _tutorialManager;
 
     private List<Vector2> _checkpoints = new List<Vector2>();
 
@@ -34,6 +36,7 @@ public partial class LevelManager : Node2D
         CollectCheckpoints();
         SpawnPlayer();
         ConnectPlayerSignals();
+        CallDeferred(nameof(TryStartBeginnerTutorial));
 
         // Giữ phần bẫy đá từ GitHub
         if (LevelNumber == 1)
@@ -132,6 +135,19 @@ public partial class LevelManager : Node2D
         if (_player != null) _player.PlayerDied += OnPlayerDied;
     }
 
+    private async void TryStartBeginnerTutorial()
+    {
+        if (LevelNumber != 1) return;
+        if (_player == null || !IsInstanceValid(_player)) return;
+        if (GameManager.Instance == null) return;
+        if (GameManager.Instance.HasCompletedOnboardingTutorial) return;
+
+        _tutorialManager = new TutorialManager();
+        AddChild(_tutorialManager);
+
+        await _tutorialManager.RunTutorial(_player);
+    }
+
     public void ActivateCheckpoint(int index)
     {
         if (index > GameManager.Instance.CurrentCheckpointIndex && index < _checkpoints.Count)
@@ -147,15 +163,15 @@ public partial class LevelManager : Node2D
         {
             // 1. Reset vị trí về Checkpoint gần nhất
             int checkpointIndex = GameManager.Instance.CurrentCheckpointIndex;
-            Vector2 spawnPos = _checkpoints.Count > checkpointIndex 
-                ? _checkpoints[checkpointIndex] 
+            Vector2 spawnPos = _checkpoints.Count > checkpointIndex
+                ? _checkpoints[checkpointIndex]
                 : (_spawnPoint?.GlobalPosition ?? Vector2.Zero);
-            
+
             _player.GlobalPosition = spawnPos;
-            
+
             // 2. Reset trạng thái nhân vật (Máu, sống lại) thông qua call method trong Player.cs
             _player.Call("FastReset");
-            
+
             GD.Print("Đã hồi sinh nhanh tại chỗ!");
         }
         else

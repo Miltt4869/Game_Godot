@@ -19,6 +19,8 @@ public partial class GameManager : Node
     public int TotalKeys { get; set; } = 0;
     public int UnlockedSkillsCount { get; set; } = 0;
     public int PlayerLives { get; set; } = 3; // Mạng của nhân vật
+    public bool HasCompletedOnboardingTutorial { get; set; } = false;
+    public bool IsTutorialRunning { get; set; } = false;
 
     // ── Transition UI ────────────────────────────────────────────────────────
     private CanvasLayer _transitionLayer;
@@ -61,8 +63,9 @@ public partial class GameManager : Node
     private void InitUI()
     {
         _transitionLayer = new CanvasLayer { Layer = 100 };
-        
-        _transitionRect = new ColorRect {
+
+        _transitionRect = new ColorRect
+        {
             Color = new Color(0, 0, 0, 0),
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
@@ -79,7 +82,8 @@ public partial class GameManager : Node
         vbox.MouseFilter = Control.MouseFilterEnum.Ignore;
         centerContainer.AddChild(vbox);
 
-        _transitionLabel = new Label {
+        _transitionLabel = new Label
+        {
             Text = "Đang tải dữ liệu...",
             HorizontalAlignment = HorizontalAlignment.Center,
             Visible = false
@@ -87,7 +91,8 @@ public partial class GameManager : Node
         _transitionLabel.AddThemeFontSizeOverride("font_size", 36);
         vbox.AddChild(_transitionLabel);
 
-        _respawnLabel = new Label {
+        _respawnLabel = new Label
+        {
             Text = "",
             HorizontalAlignment = HorizontalAlignment.Center,
             Visible = false
@@ -96,12 +101,13 @@ public partial class GameManager : Node
         _respawnLabel.AddThemeColorOverride("font_color", new Color(1, 0.9f, 0.2f)); // Màu vàng cho nổi
         vbox.AddChild(_respawnLabel);
 
-        _loadingBar = new ProgressBar {
+        _loadingBar = new ProgressBar
+        {
             CustomMinimumSize = new Vector2(500, 15),
             Visible = false,
             ShowPercentage = false
         };
-        
+
         var styleBg = new StyleBoxFlat { BgColor = new Color(0.1f, 0.1f, 0.1f, 0.8f), CornerRadiusTopLeft = 5, CornerRadiusTopRight = 5, CornerRadiusBottomLeft = 5, CornerRadiusBottomRight = 5 };
         var styleFg = new StyleBoxFlat { BgColor = new Color(0.2f, 0.8f, 0.4f, 1.0f), CornerRadiusTopLeft = 5, CornerRadiusTopRight = 5, CornerRadiusBottomLeft = 5, CornerRadiusBottomRight = 5 };
         _loadingBar.AddThemeStyleboxOverride("background", styleBg);
@@ -145,10 +151,13 @@ public partial class GameManager : Node
         _loadingBar.Visible = true;
         _loadingBar.Value = 0;
 
-        if (isLevel) {
+        if (isLevel)
+        {
             _useThreadedLoading = true;
             ResourceLoader.LoadThreadedRequest(path, "", true);
-        } else {
+        }
+        else
+        {
             await Task.Delay(300);
             GetTree().ChangeSceneToFile(path);
             _isTransitioning = false;
@@ -162,7 +171,7 @@ public partial class GameManager : Node
     private async void FinishSwitch(PackedScene packed)
     {
         GetTree().ChangeSceneToPacked(packed);
-        for(int i = 0; i < 3; i++) await ToSignal(GetTree(), "process_frame");
+        for (int i = 0; i < 3; i++) await ToSignal(GetTree(), "process_frame");
         _transitionLabel.Visible = false;
         _loadingBar.Visible = false;
         var tw = CreateTween();
@@ -188,14 +197,14 @@ public partial class GameManager : Node
         LoadLevel(CurrentLevel);
     }
 
-    public void NextLevel() 
-    { 
-        CurrentLevel++; 
+    public void NextLevel()
+    {
+        CurrentLevel++;
         CurrentCheckpointIndex = 0; // Reset checkpoint for the new level
-        LoadLevel(CurrentLevel); 
+        LoadLevel(CurrentLevel);
     }
-    public async void GameOver() 
-    { 
+    public async void GameOver()
+    {
         if (PlayerLives > 1)
         {
             // --- HỒI SINH NHANH TRONG MÀN (KHÔNG LOAD LẠI) ---
@@ -209,7 +218,7 @@ public partial class GameManager : Node
             // --- HẾT MẠNG - QUAY VỀ MÀN 1 ---
             IsGameOver = true;
             PlayerLives = 3; // Reset lại mạng cho lần chơi sau
-            ChangeSceneWithTransition("res://Scenes/Main/GameOver.tscn", false); 
+            ChangeSceneWithTransition("res://Scenes/Main/GameOver.tscn", false);
         }
     }
 
@@ -245,19 +254,21 @@ public partial class GameManager : Node
     public void WinGame() => ChangeSceneWithTransition("res://Scenes/Main/WinScreen.tscn", false);
     public void GoToMainMenu() { IsGameOver = false; PlayerLives = 3; ChangeSceneWithTransition("res://Scenes/Main/MainMenu.tscn", false); }
 
-    private void ResetStats() 
-    { 
-        Score = 0; 
-        CurrentLevel = 1; 
-        CurrentCheckpointIndex = 0; 
-        PlayerHealth = MaxPlayerHealth; 
-        IsGameOver = false; 
+    private void ResetStats()
+    {
+        Score = 0;
+        CurrentLevel = 1;
+        CurrentCheckpointIndex = 0;
+        PlayerHealth = MaxPlayerHealth;
+        IsGameOver = false;
         PlayerLives = 3;
-        UnlockedSkillsCount = 0; 
+        UnlockedSkillsCount = 0;
         HasBossKey = false;
         TotalKeys = 0;
+        HasCompletedOnboardingTutorial = false;
+        IsTutorialRunning = false;
     }
-    
+
     // ── Required Utilities (FIX MISSING METHODS) ─────────────────────────────
     public void PreloadScene(string path) { ResourceLoader.LoadThreadedRequest(path, "", true); }
     public void StopBackgroundMusic() => _bgMusicPlayer.Stop();
@@ -265,7 +276,8 @@ public partial class GameManager : Node
     public void AddScore(int p) => Score += p;
     public void PlayerTakeDamage(int d) { PlayerHealth -= d; if (PlayerHealth <= 0) GameOver(); }
     public void HealPlayer(int a) => PlayerHealth = Math.Min(PlayerHealth + a, MaxPlayerHealth);
-    public void PlayBackgroundMusic(bool isG) { 
+    public void PlayBackgroundMusic(bool isG)
+    {
         AudioStream t = isG ? _gameplayMusic : _menuMusic;
         if (_bgMusicPlayer.Stream != t) { _bgMusicPlayer.Stop(); _bgMusicPlayer.Stream = t; }
         if (!_bgMusicPlayer.Playing) _bgMusicPlayer.Play();

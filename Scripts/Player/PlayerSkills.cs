@@ -271,6 +271,7 @@ public partial class Player : CharacterBody2D
         UpdateSkillUICooldowns();
 
         if (_inCutscene || _isDead || _isHurt) return;
+        if (!IsActionAllowedByTutorial("skill")) return;
 
         // Lắng nghe phím nhấn từ mọi nguồn (tay cầm, phím cứng, phím ảo)
         bool press1 = Input.IsActionJustPressed("skill1") || Input.IsKeyPressed(Key.Key1);
