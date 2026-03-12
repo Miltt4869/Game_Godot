@@ -3,14 +3,13 @@
 
 ---
 
-## 🗺️ TỔNG QUAN 4 MÀN
+## 🗺️ TỔNG QUAN 3 MÀN
 
 | Màn | Chủ đề | Kẻ địch chính | Skill mở khóa | Tuyệt Kỳ mở khóa |
 |-----|--------|---------------|---------------|------------------|
 | **1** | Rừng Thiêng — Vượt Thử Thách | Cọc nhọn, hố sâu, 1 rắn tuần tra | ⚔️ Phi Rìu `[1]` + 🌪️ Lốc Xoáy `[2]` | 🪓 J + 🌀 K |
 | **2** | Hang Đá Đầu Biển — Hỗn Chiến | Bầy rắn nhỏ + Bầy đại bàng | 💥 Sơn Hà Thiên Tổ `[3]` | ⚡ L |
-| **3** | Đáy Hầm Tối — Đại Xà Canh Giữ | Đại Xà + bầy quái nhỏ spawn liên tục | *(Không thêm — dùng toàn bộ để đánh Đại Xà)* | — |
-| **4** | Sào Huyệt Chằn Tinh — Quyết Chiến | Chằn Tinh (3 giai đoạn) + Giải cứu Công chúa | — | — |
+| **3** | Đáy Hầm & Sào Huyệt — Quyết Chiến Cuối | Đại Xà (cổng vào) + Chằn Tinh 3 giai đoạn + Giải cứu Công chúa | — | — |
 
 ---
 
@@ -104,6 +103,32 @@
 
 > 💬 *"Nhấn [SPACE] lần 2 giữa không trung để nhảy thêm một lần nữa — Double Jump!"*
 
+### 🎙️ Lời thoại & hướng dẫn xuất hiện trong Màn 1
+
+**Khi bắt đầu di chuyển:**
+
+> 🗣️ **Thạch Sanh** *(nhìn địa hình phía trước)*: *"Đường rừng này không có kẻ địch, nhưng chỉ cần sơ sẩy một bước là trả giá. Phải thật tỉnh táo."*
+
+> 💬 *"Di chuyển bằng `← →`. Giữ nhịp chạy ổn định trước khi nhảy qua hố."*
+
+**Khi tới hố sâu đầu tiên:**
+
+> 🗣️ **Thạch Sanh**: *"Khoảng cách này không thể bước thường. Phải lấy đà rồi nhảy thật chuẩn."*
+
+> 💬 *"Nhấn `SPACE` để nhảy. Canh mép vực trước khi bật nhảy."*
+
+**Khi tới đoạn cần Double Jump:**
+
+> 🗣️ **Thạch Sanh**: *"Vách đá dựng đứng… Một cú nhảy chưa đủ. Ta phải đạp gió thêm lần nữa giữa không trung!"*
+
+> 💬 *"Nhấn `SPACE` lần thứ hai khi đang trên không để thực hiện Double Jump."*
+
+**Khi tới hành lang cọc nhọn:**
+
+> 🗣️ **Thạch Sanh**: *"Cọc nhọn lên xuống có nhịp. Không cần nhanh nhất — chỉ cần đúng thời điểm."*
+
+> 💬 *"Quan sát 1 đến 2 nhịp trước khi băng qua. Sai nhịp là mất máu ngay."*
+
 ---
 
 ## 🐍 Kẻ Địch Duy Nhất — Rắn Tuần Tra Cửa Hang
@@ -120,7 +145,15 @@
 
 > 💬 *"Dùng tổ hợp tấn công để đánh combo! Chú ý lùi lại khi rắn sắp cắn."*
 
+> 🗣️ **Rắn tuần tra** *(uốn người, nhe nanh)*: *"Máu của ngươi sẽ nhuộm đỏ lối vào hang này!"*
+
+> 🗣️ **Thạch Sanh** *(hạ thấp trọng tâm, siết chặt rìu)*: *"Nếu ngươi cản đường chính nghĩa, ta sẽ chém đứt mọi nọc độc của ngươi."*
+
 **[Rắn ngã xuống — cửa hang mở ra]**
+
+> 🗣️ **Rắn tuần tra** *(gục xuống)*: *"Chủ nhân… sẽ không tha cho ngươi…"*
+
+> 🗣️ **Thạch Sanh**: *"Ta không đến để xin tha. Ta đến để kết thúc hắn."*
 
 ---
 
@@ -137,6 +170,10 @@
 **[Rìu thần phát sáng — hai luồng ánh sáng xanh và vàng bao quanh Thạch Sanh]**
 
 > 🗣️ **Thạch Sanh** *(nhìn vào hai lòng bàn tay, cảm nhận sức mạnh)*: *"Hai pháp thuật từ Thiên Đình… Ngọc Hoàng đang phù hộ ta. Ta sẽ không phụ lòng người!"*
+
+> 🗣️ **Ngọc Hoàng:** *"Hãy nhớ cho kỹ, Thạch Sanh. Sức mạnh không phải để phô trương — mà để che chở kẻ yếu và trừng trị yêu tà. Càng vào sâu, lòng ngươi càng phải vững hơn rìu trong tay."*
+
+> 🗣️ **Thạch Sanh** *(cúi đầu)*: *"Con xin ghi nhớ. Rìu này chỉ vung vì lẽ phải, không vì tư thù."*
 
 ### ✅ MỞ KHÓA SAU MÀN 1:
 
@@ -212,6 +249,32 @@
 
 > 💬 *"Rắn đỏ phun độc từ xa — hãy dùng [1] để Phi Rìu tự bay tìm đến!"*
 
+### 🎙️ Lời thoại & hướng dẫn xuất hiện trong Màn 2
+
+**Khi đợt quái đầu tiên xuất hiện:**
+
+> 🗣️ **Thạch Sanh** *(đảo mắt quan sát hai tầng địa hình)*: *"Dưới đất có rắn, trên cao có đại bàng. Nếu đứng yên, ta sẽ bị ép từ cả hai phía."*
+
+> 💬 *"Luôn di chuyển. Ưu tiên xử lý mục tiêu ở xa trước khi bị bao vây."*
+
+**Khi rắn đỏ phun độc xuất hiện:**
+
+> 🗣️ **Rắn đỏ đầu đàn:** *"Phun nọc đi! Đừng cho hắn đến gần!"*
+
+> 🗣️ **Thạch Sanh**: *"Núp sau nọc độc cũng vô ích thôi. Rìu thần sẽ tìm đến các ngươi."*
+
+**Khi đại bàng lao xuống:**
+
+> 🗣️ **Đại bàng trinh sát** *(quần vòng trên cao)*: *"Khóa chân hắn lại! Bổ nhào đồng loạt!"*
+
+> 💬 *"Kẻ địch trên không thường để lộ sơ hở sau khi đáp đất. Né trước, phản công sau."*
+
+**Khi bị bao vây ở Sóng 4:**
+
+> 🗣️ **Thạch Sanh** *(xoay rìu chuẩn bị tung skill)*: *"Tụ lại hết đi! Một cơn lốc là đủ quét sạch bọn ngươi!"*
+
+> 💬 *"Dùng `2` khi số lượng địch quá đông để mở khoảng trống an toàn quanh nhân vật."*
+
 ---
 
 ## 🏁 Boss Cuối Màn 2 — Đại Bàng Vương + Rắn Chúa
@@ -226,6 +289,10 @@
 - Đại Bàng Vương lượn trên cao, **thả bầy rắn nhỏ** xuống liên tục
 - Khi Đại Bàng Vương mất 50% máu → **Rắn Chúa Đôi Đầu** trồi lên từ hố đất
 - **Chiêu kết hợp nguy hiểm:** Đại Bàng bắt người chơi lên cao → Rắn Chúa há miệng đón dưới
+
+> 🗣️ **Rắn Chúa Đôi Đầu** *(trồi lên, hai đầu rít cùng lúc)*: *"Kẻ phàm tục… ngươi sẽ bị xé đôi trước mặt Chằn Tinh!"*
+
+> 🗣️ **Thạch Sanh**: *"Một đầu hay hai đầu cũng vậy. Đã theo cái ác thì đều phải ngã xuống."*
 
 > 💬 *"Đại Bàng Vương thả rắn xuống — dùng Lốc Xoáy để quét sạch bầy rắn trước!"*
 
@@ -253,6 +320,10 @@
 
 > 🗣️ **Thạch Sanh** *(giọng đầy quyết tâm)*: *"Sơn Hà Thiên Tổ… Tuyệt Kỳ Phục Xà Thần… Ngọc Hoàng đã trao cho ta đủ sức mạnh. Đại Xà — ta đến!"*
 
+> 🗣️ **Ngọc Hoàng:** *"Phía trước là nơi bóng tối dày đặc nhất. Hãy nhớ: đại xà giữ cửa, nhưng Chằn Tinh mới là gốc họa. Đừng để nỗi giận khiến ngươi quên mục đích cứu người."*
+
+> 🗣️ **Thạch Sanh**: *"Con hiểu. Con sẽ phá cổng tối, diệt yêu tà, rồi đưa công chúa trở về."*
+
 ### ✅ MỞ KHÓA SAU MÀN 2:
 
 **💥 KỸ NĂNG 3 — SƠN HÀ THIÊN TỔ `[Phím 3]`**
@@ -272,7 +343,7 @@
 ---
 ---
 
-# 🐍 MÀN 3 — ĐÁY HẦM TỐI: ĐẠI XÀ CANH GIỮCỔNG
+# 🐍 MÀN 3 — ĐÁY HẦM & SÀO HUYỆT: ĐẠI XÀ + CHẰN TINH (Màn Cuối)
 
 ## 🎬 Cutscene Mở Đầu
 
@@ -304,6 +375,28 @@
 
 > 💬 *"Đừng để bầy quái nhỏ dồn lại — chúng sẽ cản trở khi đang đánh Đại Xà!"*
 
+### 🎙️ Lời thoại & hướng dẫn trong trận Đại Xà
+
+**Khi quái nhỏ spawn:**
+
+> 🗣️ **Nhện hang** *(bò từ vách đá xuống)*: *"Trói chân hắn lại! Cho Đại Xà nuốt chửng!"*
+
+> 🗣️ **Ma lửa nhỏ**: *"Thiêu hắn! Thiêu hắn trước khi hắn đến gần chủ nhân!"*
+
+> 🗣️ **Thạch Sanh**: *"Các ngươi chỉ là khói lửa che mắt. Ta chém mở đường là xong."*
+
+**Khi Đại Xà dùng chiêu lao hụt:**
+
+> 🗣️ **Đại Xà** *(đập đầu vào đá, gầm đau đớn)*: *"KHÔNG! Không thể nào!"*
+
+> 💬 *"Boss đã choáng. Áp sát hoặc dùng Tuyệt Kỳ để gây sát thương lớn nhất."*
+
+**Khi máu Đại Xà xuống thấp:**
+
+> 🗣️ **Đại Xà** *(thở dốc, vảy rung lên)*: *"Chủ nhân… xin ban thêm sức mạnh… ta không thể thua một phàm nhân…"*
+
+> 🗣️ **Thạch Sanh**: *"Ngươi không thua ta. Ngươi thua vì đứng về phía hung ác."*
+
 ### 🏁 Đại Xà — Bộ Chiêu Thức:
 
 | Chiêu | Mô tả | Cảnh báo | Cách phản công |
@@ -327,22 +420,25 @@
 
 ---
 
-## 🎬 Cutscene Kết Màn 3
+## 🎬 Cutscene Sau Khi Hạ Đại Xà — Vào Sào Huyệt
 
 > 🗣️ **Đại Xà** *(giọng yếu ớt dần)*: *"Không… tưởng được… Tuyệt Kỳ của Thiên Đình… ta… không thể… chống đỡ…"*
 
-> 🗣️ **Thạch Sanh** *(nhìn về phía cửa hang mở ra)*: *"Xà thần đã bị hạ. Cánh cửa đã mở. Chằn Tinh — ta có thể nghe thấy tiếng gõ nhẹ của một chiếc lồng sắt từ trong đó… Công chúa vẫn còn ở đó."*
+> 🗣️ **Thạch Sanh** *(nhìn về phía cửa hang mở ra, nghe tiếng gầm từ sâu bên trong)*: *"Xà thần đã bị hạ. Cánh cửa mở rồi… Nhưng trong đó — tiếng gầm đó… Chằn Tinh đang chờ ta!"*
 
-**[Ánh sáng le lói từ phía trong — tiếng gõ nhẹ khẽ vang]**
+**[Ánh lửa đỏ rực ập ra từ phía trong. Mặt đất rung chuyển — tiếng gào gừ vang dội cả hầm tối]**
 
-> 📜 *"Đại Xà ngã xuống, thân hình tan thành ánh sáng. Cổng vào hang Chằn Tinh mở ra. Thạch Sanh bước vào — đây là trận chiến cuối cùng…"*
+> 📜 *"Đại Xà ngã xuống, thân hình tan thành ánh sáng. Cổng sào huyệt mở ra — và tiếng gầm của Chằn Tinh vang lên từ trong bóng tối. Trận chiến cuối cùng đã đến!"*
+
+> 🗣️ **Ngọc Hoàng** *(giọng vang nhẹ trong tâm trí)*: *"Giờ là trận chiến định đoạt. Giữ vững tâm trí, Thạch Sanh. Kẻ địch mạnh nhất thường đánh vào nỗi sợ trước tiên."*
+
+> 🗣️ **Thạch Sanh** *(bước tiếp vào bóng lửa)*: *"Con không còn sợ nữa. Chỉ còn một việc phải làm."*
 
 ---
----
 
-# 🏯 MÀN 4 — SÀOHUYỆT CHẰN TINH: QUYẾT CHIẾN VÀ GIẢI CỨU
+## 🏯 SÀO HUYỆT CHẰN TINH — QUYẾT CHIẾN CUỐI
 
-## 🎬 Cutscene Mở Đầu
+## 🎬 Cutscene Gặp Chằn Tinh
 
 **[Hang rộng lớn hoành tráng. Ánh lửa đỏ rực từ hai bên tường. Giữa không trung — một chiếc lồng sắt treo lơ lửng bằng xích. Bên trong… Công chúa Quỳnh Nga]**
 
@@ -359,6 +455,16 @@
 > 🗣️ **Công chúa** *(từ trong lồng, lo lắng)*: *"Thạch Sanh… cẩn thận! Chằn Tinh rất mạnh!"*
 
 > 🗣️ **Thạch Sanh** *(nhìn lên lồng sắt, mỉm cười)*: *"Ta biết. Nhưng ta còn mạnh hơn."*
+
+### 🎙️ Lời thoại & hướng dẫn trong boss Chằn Tinh
+
+**Khi vào trận:**
+
+> 💬 *"Boss cuối có nhiều giai đoạn. Đừng dồn toàn bộ kỹ năng ngay từ đầu nếu chưa phá được cơ chế."*
+
+> 🗣️ **Chằn Tinh** *(đập ngực, cười lớn)*: *"Ta là nỗi kinh hoàng của núi rừng, của hang sâu, của mọi kẻ yếu đuối. Ngươi chỉ là một con người cầm rìu mà thôi!"*
+
+> 🗣️ **Thạch Sanh**: *"Chỉ một con người là đủ, nếu người đó không chịu cúi đầu trước cái ác."*
 
 ---
 
@@ -377,9 +483,13 @@
 
 > 💬 *"Giáp đá của Chằn Tinh rất dày! Chờ nó Hú để triệu rắn — dùng Tuyệt Kỳ K phá giáp và quét rắn cùng lúc!"*
 
+> 🗣️ **Chằn Tinh** *(gầm khi gọi rắn)*: *"Ra đây, lũ tay sai! Xé nát chân tay hắn cho ta!"*
+
+> 🗣️ **Thạch Sanh**: *"Triệu thêm bao nhiêu cũng vô ích. Ta phá giáp ngươi ngay trước mắt chúng!"*
+
 **[Sau khi giáp vỡ]**
 
-> 🗣️ **Chằn Tinh** *(giáp đá vỡ tan, gầm lên tức giận)*: *"NGỪ ĐÁ!!! Ngươi dám phá giáp của ta?! TA SẼ NGHIỀN NAT NGƯƠI!!"*
+> 🗣️ **Chằn Tinh** *(giáp đá vỡ tan, gầm lên tức giận)*: *"NGƯƠI DÁM!!! Ngươi dám phá giáp của ta?! TA SẼ NGHIỀN NÁT NGƯƠI!!"*
 
 > 🗣️ **Thạch Sanh** *(không nao núng)*: *"Lớp vỏ đã bị phá. Bây giờ mới đến phần thật sự."*
 
@@ -400,6 +510,8 @@
 > 🗣️ **Chằn Tinh** *(gầm rú)*: *"THẠCH SANH! Ngươi làm ta TỨC GIẬN! Ta sẽ phá nát ngươi thành từng mảnh!"*
 
 > 🗣️ **Thạch Sanh** *(né liên tục, thở gấp nhưng vẫn tập trung)*: *"Càng tức giận — càng sơ hở. Chờ đi, Chằn Tinh!"*
+
+> 🗣️ **Ngọc Hoàng** *(tiếng vọng ngắn giữa trận)*: *"Đừng đuổi theo cơn giận của nó. Chờ đúng khoảnh khắc rồi tung đòn quyết định."*
 
 **[Chằn Tinh phun lửa xong, đứng nghiêng khò hơi 2 giây → Thạch Sanh kích hoạt Tuyệt Kỳ J]**
 
@@ -422,6 +534,10 @@
 | **Đập Ba Liên** | Đập tay 3 lần liên tiếp, tốc độ tăng dần | Né + lăn liên tục 3 lần |
 | **Hú Điên Loạn** | Rung màn hình + gọi toàn bộ quái còn lại | Dùng **Sơn Hà Thiên Tổ `[3]`** quét sạch |
 | **Lao Thân** | Nhắm thẳng vào người chơi, lao tốc độ tối đa | **→ Đây là cơ hội cuối cùng!** |
+
+> 🗣️ **Chằn Tinh** *(ở ngưỡng máu thấp, giọng khản đặc)*: *"Nếu ta không sống, cả hang này cũng sẽ chôn vùi ngươi!"*
+
+> 🗣️ **Thạch Sanh**: *"Ta đã bước vào đây để cứu người, thì cũng sẵn sàng kết thúc mọi hiểm họa tại đây."*
 
 ### 🎯 Cú Đánh Kết Thúc — Tuyệt Kỳ Finisher:
 
@@ -465,6 +581,10 @@
 
 **[Ánh bình minh tràn vào hang. Lối ra xuất hiện phía trước. Thạch Sanh và Công chúa cùng bước về phía ánh sáng]**
 
+> 🗣️ **Ngọc Hoàng:** *"Ngươi đã thắng không chỉ bằng sức mạnh, mà bằng lòng ngay thẳng không đổi. Hãy đưa công chúa trở về, và để nhân gian nhớ rằng chính nghĩa luôn cần một người dám đứng lên."*
+
+> 🗣️ **Thạch Sanh** *(nhìn theo ánh bình minh)*: *"Con xin lĩnh mệnh. Chỉ cần còn người dân bị áp bức, con vẫn sẽ cầm rìu đứng ra."*
+
 ---
 
 ## 📜 MÀN HÌNH CHIẾN THẮNG
@@ -506,11 +626,9 @@
        💥  Kỹ năng 3: SƠN HÀ THIÊN TỔ [3]  ← 20s cooldown
        ⚡  Tuyệt Kỳ L: PHỤC XÀ THẦN (300%, không thể né, choáng 2s)
 
-⏬ VÀO MÀN 3 (Đáy Hầm Tối)
-    ↳ Dùng toàn bộ sức mạnh để hạ Đại Xà
-
-⏬ VÀO MÀN 4 (Sào Huyệt Chằn Tinh)
-    ↳ Trận quyết chiến — 3 giai đoạn
+⏬ VÀO MÀN 3 (Đáy Hầm & Sào Huyệt — Màn Cuối)
+    ↳ Hạ Đại Xà canh cổng
+    ↳ Trận quyết chiến Chằn Tinh — 3 giai đoạn
     ↳ Giải cứu Công chúa Quỳnh Nga
 
 ════════════════════════════════════════
@@ -526,10 +644,9 @@
 |---|---|---|
 | **Màn 1** | Nhẹ nhàng, tiếng gió rừng, nhạc dân tộc | Rừng cây xanh, cây đa, hoàng hôn |
 | **Màn 2** | Dồn dập, căng thẳng, trống trận | Hang đá ven biển, ánh lửa mờ, sóng vỗ |
-| **Màn 3** | U ám, huyền bí, tiếng rắn rít xa | Đáy hầm tối, nhũ đá, nước nhỏ giọt |
-| **Màn 4** | Sử thi hoành tráng, boss music rầm rộ | Hang rộng, lửa đỏ hai bên, lồng sắt treo |
+| **Màn 3** | U ám → Sử thi hoành tráng, boss music rầm rộ | Đáy hầm tối, nhũ đá → Hang rộng, lửa đỏ hai bên, lồng sắt treo |
 
 ---
 
-*📝 Kịch bản hoàn chỉnh v2.0 — Game Thạch Sanh 2D*
-*Cập nhật: 11/03/2026*
+*📝 Kịch bản hoàn chỉnh v3.0 — Game Thạch Sanh 2D (3 màn)*
+*Cập nhật: 12/03/2026*

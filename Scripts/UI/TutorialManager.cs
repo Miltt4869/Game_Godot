@@ -14,6 +14,7 @@ public partial class TutorialManager : CanvasLayer
     private Label _bodyLabel;
     private Label _hintLabel;
     private Button _skipButton;
+    private AudioStreamPlayer _voicePlayer;
 
     private bool _moveDone;
     private bool _jumpDone;
@@ -25,14 +26,16 @@ public partial class TutorialManager : CanvasLayer
         public readonly string Title;
         public readonly string Body;
         public readonly string Hint;
+        public readonly string VoicePath;
         public readonly Func<bool> IsCompleted;
 
-        public TutorialStep(string actionId, string title, string body, string hint, Func<bool> isCompleted)
+        public TutorialStep(string actionId, string title, string body, string hint, string voicePath, Func<bool> isCompleted)
         {
             ActionId = actionId;
             Title = title;
             Body = body;
             Hint = hint;
+            VoicePath = voicePath;
             IsCompleted = isCompleted;
         }
     }
@@ -63,16 +66,18 @@ public partial class TutorialManager : CanvasLayer
         {
             new TutorialStep(
                 "move_jump",
-                "Bước 1: Làm nóng người",
-                "Đi thử trái phải rồi nhảy một cái nha.",
+                "🗣️ Thạch Sanh",
+                "Đường rừng này không có kẻ địch, nhưng chỉ cần sơ sẩy một bước là trả giá. Phải thật tỉnh táo.",
                 "A/D hoặc ←/→ để đi, Space để nhảy.",
+                "res://Assets/Audio/Voices/Tutorial_Move.mp3", // Đường dẫn file âm thanh, bạn có thể tạo sau
                 () => _moveDone && _jumpDone
             ),
             new TutorialStep(
                 "attack",
-                "Bước 2: Quẩy nhẹ",
-                "Giờ chém thường một nhát cho quen tay.",
-                "Nhấn Z hoặc chuột trái.",
+                "🗣️ Thạch Sanh",
+                "Trước khi tiến vào sâu trong hang, ta phải khởi động tay chân. Rìu thần sẽ không nương tay với yêu tà!",
+                "Nhấn Z hoặc chuột trái để chém.",
+                "res://Assets/Audio/Voices/Tutorial_Attack.mp3", // Đường dẫn file âm thanh, bạn có thể tạo sau
                 () => _attackDone
             )
         };
@@ -110,6 +115,9 @@ public partial class TutorialManager : CanvasLayer
         var root = new Control();
         root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(root);
+
+        _voicePlayer = new AudioStreamPlayer();
+        AddChild(_voicePlayer);
 
         _panel = new PanelContainer();
         _panel.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
@@ -184,6 +192,21 @@ public partial class TutorialManager : CanvasLayer
         _panel.Modulate = new Color(1, 1, 1, 0f);
         var tw = CreateTween();
         tw.TweenProperty(_panel, "modulate:a", 1f, 0.2f);
+
+        // Phát file âm thanh nếu có cấu hình VoicePath
+        if (!string.IsNullOrEmpty(step.VoicePath))
+        {
+            if (ResourceLoader.Exists(step.VoicePath))
+            {
+                var stream = GD.Load<AudioStream>(step.VoicePath);
+                _voicePlayer.Stream = stream;
+                _voicePlayer.Play();
+            }
+            else
+            {
+                GD.PrintErr($"[TutorialManager] Không tìm thấy file âm thanh: {step.VoicePath}");
+            }
+        }
     }
 
     private void CaptureStepInput(string actionId)
