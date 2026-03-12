@@ -18,11 +18,13 @@ public partial class GameManager : Node
     public bool HasBossKey { get; set; } = false;
     public int TotalKeys { get; set; } = 0;
     public int UnlockedSkillsCount { get; set; } = 0;
+    public int PlayerLives { get; set; } = 3; // Mạng của nhân vật
 
     // ── Transition UI ────────────────────────────────────────────────────────
     private CanvasLayer _transitionLayer;
     private ColorRect _transitionRect;
     private Label _transitionLabel;
+    private Label _respawnLabel; // Label hồi sinh
     private ProgressBar _loadingBar;
     private bool _isTransitioning = false;
 
@@ -84,6 +86,15 @@ public partial class GameManager : Node
         };
         _transitionLabel.AddThemeFontSizeOverride("font_size", 36);
         vbox.AddChild(_transitionLabel);
+
+        _respawnLabel = new Label {
+            Text = "",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Visible = false
+        };
+        _respawnLabel.AddThemeFontSizeOverride("font_size", 48);
+        _respawnLabel.AddThemeColorOverride("font_color", new Color(1, 0.9f, 0.2f)); // Màu vàng cho nổi
+        vbox.AddChild(_respawnLabel);
 
         _loadingBar = new ProgressBar {
             CustomMinimumSize = new Vector2(500, 15),
@@ -183,9 +194,56 @@ public partial class GameManager : Node
         CurrentCheckpointIndex = 0; // Reset checkpoint for the new level
         LoadLevel(CurrentLevel); 
     }
-    public void GameOver() { IsGameOver = true; ChangeSceneWithTransition("res://Scenes/Main/GameOver.tscn", false); }
+    public async void GameOver() 
+    { 
+        if (PlayerLives > 1)
+        {
+            // --- HỒI SINH NHANH TRONG MÀN (KHÔNG LOAD LẠI) ---
+            PlayerLives--;
+            CurrentCheckpointIndex = 0; // Reset checkpoint về 0 để quay lại đầu map
+            await ShowRespawnSequence();
+            // Lệnh hồi sinh được gọi ngay ở cuối ShowRespawnSequence
+        }
+        else
+        {
+            // --- HẾT MẠNG - QUAY VỀ MÀN 1 ---
+            IsGameOver = true;
+            PlayerLives = 3; // Reset lại mạng cho lần chơi sau
+            ChangeSceneWithTransition("res://Scenes/Main/GameOver.tscn", false); 
+        }
+    }
+
+    private async Task ShowRespawnSequence()
+    {
+        _transitionRect.Color = new Color(0, 0, 0, 0);
+        var tw = CreateTween();
+        tw.TweenProperty(_transitionRect, "color:a", 1.0f, 0.3f);
+        await ToSignal(tw, "finished");
+
+        _respawnLabel.Visible = true;
+        for (int i = 3; i > 0; i--)
+        {
+            _respawnLabel.Text = $"Hồi sinh sau... {i}";
+            await Task.Delay(1000);
+        }
+        _respawnLabel.Visible = false;
+
+        // --- GỌI HÀM HỒI SINH NHANH TỪ LEVEL MANAGER ---
+        var levelManager = GetTree().CurrentScene as LevelManager;
+        if (levelManager != null)
+        {
+            levelManager.FastRespawnPlayer();
+        }
+
+        // Mờ dần màn đen trả lại game
+        var twHide = CreateTween();
+        twHide.TweenProperty(_transitionRect, "color:a", 0.0f, 0.4f);
+        await ToSignal(twHide, "finished");
+        _isTransitioning = false;
+    }
+
     public void WinGame() => ChangeSceneWithTransition("res://Scenes/Main/WinScreen.tscn", false);
-    public void GoToMainMenu() { IsGameOver = false; ChangeSceneWithTransition("res://Scenes/Main/MainMenu.tscn", false); }
+    public void GoToMainMenu() { IsGameOver = false; PlayerLives = 3; ChangeSceneWithTransition("res://Scenes/Main/MainMenu.tscn", false); }
 
     private void ResetStats() 
     { 
@@ -194,6 +252,7 @@ public partial class GameManager : Node
         CurrentCheckpointIndex = 0; 
         PlayerHealth = MaxPlayerHealth; 
         IsGameOver = false; 
+        PlayerLives = 3;
         UnlockedSkillsCount = 0; 
         HasBossKey = false;
         TotalKeys = 0;

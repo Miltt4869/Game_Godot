@@ -27,7 +27,7 @@ public partial class GameOver : Control
         // Bắt sự kiện click vào nút (người chơi bắt buộc phải click TRÚNG nút)
         _retryButton.Pressed += () => 
         {
-            if (_inputEnabled) GameManager.Instance.RestartLevel();
+            if (_inputEnabled) GameManager.Instance.StartGame(); // Hết mạng thì phải chơi lại từ Map 1
         };
         
         _menuButton.Pressed += () => 
@@ -57,7 +57,7 @@ public partial class GameOver : Control
         if (@event.IsActionPressed("ui_accept") || @event.IsActionPressed("jump"))
         {
             GetViewport().SetInputAsHandled();
-            GameManager.Instance.RestartLevel();
+            GameManager.Instance.StartGame(); // Hết mạng thì phải chơi lại từ Map 1
         }
         // ESC -> Menu Chính
         else if (@event.IsActionPressed("ui_cancel"))

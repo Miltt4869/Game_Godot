@@ -141,6 +141,30 @@ public partial class LevelManager : Node2D
         }
     }
 
+    public void FastRespawnPlayer()
+    {
+        if (_player != null && IsInstanceValid(_player))
+        {
+            // 1. Reset vị trí về Checkpoint gần nhất
+            int checkpointIndex = GameManager.Instance.CurrentCheckpointIndex;
+            Vector2 spawnPos = _checkpoints.Count > checkpointIndex 
+                ? _checkpoints[checkpointIndex] 
+                : (_spawnPoint?.GlobalPosition ?? Vector2.Zero);
+            
+            _player.GlobalPosition = spawnPos;
+            
+            // 2. Reset trạng thái nhân vật (Máu, sống lại) thông qua call method trong Player.cs
+            _player.Call("FastReset");
+            
+            GD.Print("Đã hồi sinh nhanh tại chỗ!");
+        }
+        else
+        {
+            // Nếu không tìm thấy player (ví dụ lỡ bị xóa), thì spawn mới
+            SpawnPlayer();
+        }
+    }
+
     private void OnPlayerDied()
     {
         var timer = GetTree().CreateTimer(1.2);

@@ -546,6 +546,26 @@ public partial class Player : CharacterBody2D
         GetNode<CollisionShape2D>("CollisionShape2D").SetDeferred("disabled", true);
     }
 
+    public void FastReset()
+    {
+        _isDead = false;
+        _isHurt = false;
+        _health = GameManager.Instance.MaxPlayerHealth;
+        GameManager.Instance.PlayerHealth = _health;
+        
+        // Reset physics
+        Velocity = Vector2.Zero;
+        Engine.TimeScale = 1.0f;
+        _animatedSprite.SpeedScale = 1.0f;
+        _animatedSprite.Modulate = Colors.White;
+        
+        // Bật lại collision
+        GetNode<CollisionShape2D>("CollisionShape2D").SetDeferred("disabled", false);
+        
+        PlayAnimationIfNotPlaying("idle");
+        EmitSignal(SignalName.HealthChanged, _health, GameManager.Instance.MaxPlayerHealth);
+    }
+
     public void WalkIntoCave(float direction = 1f)
     {
         _inCutscene = true;

@@ -5,6 +5,7 @@ public partial class HUD : CanvasLayer
     private ProgressBar _healthBar;
     private Label _scoreLabel;
     private Label _levelLabel;
+    private Label _livesLabel; // Label hiển thị số mạng
     private Label _countdownLabel;
     private Panel _pausePanel;
     private Button _pauseButton;
@@ -20,6 +21,32 @@ public partial class HUD : CanvasLayer
         _healthBar = GetNode<ProgressBar>("MarginContainer/HBoxContainer/HealthBar");
         _scoreLabel = GetNode<Label>("MarginContainer/HBoxContainer/ScoreLabel");
         _levelLabel = GetNode<Label>("MarginContainer/HBoxContainer/LevelLabel");
+
+        // Ẩn trái tim thừa phía trước
+        if (HasNode("MarginContainer/HBoxContainer/HealthIcon"))
+            GetNode<Control>("MarginContainer/HBoxContainer/HealthIcon").Visible = false;
+
+        var mainHBox = GetNode<BoxContainer>("MarginContainer/HBoxContainer");
+
+        // Tạo VBox để chứa Thanh Máu và Mạng (xếp chồng lên nhau)
+        VBoxContainer healthSection = new VBoxContainer();
+        healthSection.AddThemeConstantOverride("separation", 2);
+        mainHBox.AddChild(healthSection);
+        mainHBox.MoveChild(healthSection, 0);
+
+        // Chuyển Thanh Máu vào VBox
+        _healthBar.GetParent().RemoveChild(_healthBar);
+        healthSection.AddChild(_healthBar);
+
+        // ── 0. HIỂN THỊ MẠNG (Lives) ──────────────────────────
+        _livesLabel = new Label();
+        _livesLabel.AddThemeFontSizeOverride("font_size", 18);
+        _livesLabel.HorizontalAlignment = HorizontalAlignment.Left; // Căn lề trái
+        _livesLabel.AddThemeColorOverride("font_color", new Color(1, 0.3f, 0.3f)); 
+        _livesLabel.AddThemeConstantOverride("outline_size", 3);
+        _livesLabel.AddThemeColorOverride("font_outline_color", Colors.Black);
+        
+        healthSection.AddChild(_livesLabel);
 
         // ── 1. NÚT DỪNG GAME (Pause) ──────────────────────────
         _pauseButton = new Button();
@@ -206,6 +233,13 @@ public partial class HUD : CanvasLayer
                 _ => $"Level {GameManager.Instance.CurrentLevel}"
             };
             _levelLabel.Text = levelName;
+        }
+
+        if (_livesLabel != null)
+        {
+            string hearts = "";
+            for (int i = 0; i < GameManager.Instance.PlayerLives; i++) hearts += "❤️ ";
+            _livesLabel.Text = hearts.Trim();
         }
     }
 
