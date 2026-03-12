@@ -15,9 +15,35 @@ public partial class TreasureChest : Area2D
     private CanvasLayer _popupOverlay;
     private Label _popupContentLabel;
     private TextureRect _popupInfographic;
+    private ColorRect _popupSkillCard;
+    private TextureRect _popupSkillIcon;
+    private Label _popupSkillTitle;
+    private Label _popupSkillHotkey;
+    private Label _popupSkillBody;
+    private Label _popupSkillCooldown;
     private Player _currentPlayer;
     private Tween _typewriterTween;
     private bool _isTypewriting = false;
+
+    private readonly struct SkillCardData
+    {
+        public readonly string Title;
+        public readonly string Hotkey;
+        public readonly string Body;
+        public readonly string Cooldown;
+        public readonly string IconPath;
+        public readonly Color Accent;
+
+        public SkillCardData(string title, string hotkey, string body, string cooldown, string iconPath, Color accent)
+        {
+            Title = title;
+            Hotkey = hotkey;
+            Body = body;
+            Cooldown = cooldown;
+            IconPath = iconPath;
+            Accent = accent;
+        }
+    }
 
     public override void _Ready()
     {
@@ -477,6 +503,8 @@ public partial class TreasureChest : Area2D
         _popupInfographic.Visible = false;
         panel.AddChild(_popupInfographic);
 
+        BuildSkillCard(panel);
+
         var prompt = new Label();
         prompt.Text = "--- [ Nhấn phím bất kỳ hoặc Click để tiếp tục ] ---";
         prompt.HorizontalAlignment = HorizontalAlignment.Center;
@@ -532,52 +560,176 @@ public partial class TreasureChest : Area2D
             }
             else if (_popupSlide == 2)
             {
-                _popupContentLabel.Visible = true;
-                _popupInfographic.Visible = false;
-
-                string skillJText = "BƯỚC 3: NHẬN KỸ NĂNG MỚI\n\nChiêu J - Rìu Bay Truy Kích\nBấm J (hoặc phím 1) để ném rìu thần theo hướng kẻ địch gần nhất.\nChiêu này mở giao tranh từ xa rất êm, không cần lao vào quá sớm.";
-                _popupContentLabel.Text = skillJText;
-                _popupContentLabel.AddThemeColorOverride("font_color", new Color(0.1f, 0.2f, 0.45f));
-
-                RunTypewriter(skillJText.Length);
+                ShowSkillCard("J");
             }
             else if (_popupSlide == 3)
             {
-                ShowInfographic("res://Assets/UI/Skill_J_Info.jpg");
-            }
-            else if (_popupSlide == 4)
-            {
-                _popupContentLabel.Visible = true;
-                _popupInfographic.Visible = false;
-
-                string skillKText = "Chiêu K - Lốc Xoáy Cận Chiến\nBấm K (hoặc phím 2) để xoay liên hoàn trong vài giây.\nRất hợp khi bị vây đông hoặc cần dọn bầy quái nhanh gọn.";
-                _popupContentLabel.Text = skillKText;
-                _popupContentLabel.AddThemeColorOverride("font_color", new Color(0.35f, 0.08f, 0.08f));
-
-                RunTypewriter(skillKText.Length);
-            }
-            else if (_popupSlide == 5)
-            {
-                ShowInfographic("res://Assets/UI/Skill_K_Info.jpg");
+                ShowSkillCard("K");
             }
         }
         else if (GameManager.Instance.CurrentLevel == 2)
         {
             if (_popupSlide == 1)
             {
-                ShowInfographic("res://Assets/UI/Skill_L_Info.jpg");
+                ShowSkillCard("L");
             }
         }
     }
 
-    private void ShowInfographic(string path)
+    private void BuildSkillCard(ColorRect panel)
     {
-        _popupContentLabel.Visible = false;
-        _popupInfographic.Visible = true;
+        _popupSkillCard = new ColorRect();
+        _popupSkillCard.Visible = false;
+        _popupSkillCard.Size = new Vector2(860, 320);
+        _popupSkillCard.Position = new Vector2(45, 55);
+        _popupSkillCard.Color = new Color(0.02f, 0.05f, 0.09f, 0.97f);
+        panel.AddChild(_popupSkillCard);
 
+        var border = new ReferenceRect();
+        border.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        border.BorderWidth = 3f;
+        border.BorderColor = new Color(0.3f, 0.95f, 1f, 0.95f);
+        border.EditorOnly = false;
+        _popupSkillCard.AddChild(border);
+
+        var glow = new ColorRect();
+        glow.Size = new Vector2(860, 56);
+        glow.Color = new Color(0.18f, 0.8f, 1f, 0.15f);
+        _popupSkillCard.AddChild(glow);
+
+        _popupSkillIcon = new TextureRect();
+        _popupSkillIcon.Position = new Vector2(30, 82);
+        _popupSkillIcon.Size = new Vector2(180, 180);
+        _popupSkillIcon.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
+        _popupSkillIcon.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
+        _popupSkillCard.AddChild(_popupSkillIcon);
+
+        _popupSkillTitle = new Label();
+        _popupSkillTitle.Position = new Vector2(240, 26);
+        _popupSkillTitle.Size = new Vector2(580, 44);
+        _popupSkillTitle.AddThemeFontSizeOverride("font_size", 34);
+        _popupSkillTitle.AddThemeColorOverride("font_color", new Color(0.9f, 0.97f, 1f, 1f));
+        _popupSkillCard.AddChild(_popupSkillTitle);
+
+        _popupSkillHotkey = new Label();
+        _popupSkillHotkey.Position = new Vector2(240, 76);
+        _popupSkillHotkey.Size = new Vector2(580, 34);
+        _popupSkillHotkey.AddThemeFontSizeOverride("font_size", 24);
+        _popupSkillHotkey.AddThemeColorOverride("font_color", new Color(0.5f, 0.95f, 1f, 1f));
+        _popupSkillCard.AddChild(_popupSkillHotkey);
+
+        _popupSkillBody = new Label();
+        _popupSkillBody.Position = new Vector2(240, 124);
+        _popupSkillBody.Size = new Vector2(580, 132);
+        _popupSkillBody.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        _popupSkillBody.AddThemeFontSizeOverride("font_size", 24);
+        _popupSkillBody.AddThemeColorOverride("font_color", new Color(0.86f, 0.93f, 1f, 1f));
+        _popupSkillCard.AddChild(_popupSkillBody);
+
+        _popupSkillCooldown = new Label();
+        _popupSkillCooldown.Position = new Vector2(240, 268);
+        _popupSkillCooldown.Size = new Vector2(580, 34);
+        _popupSkillCooldown.AddThemeFontSizeOverride("font_size", 22);
+        _popupSkillCooldown.AddThemeColorOverride("font_color", new Color(1f, 0.84f, 0.25f, 1f));
+        _popupSkillCard.AddChild(_popupSkillCooldown);
+    }
+
+    private void ShowSkillCard(string skillCode)
+    {
+        _isTypewriting = false;
+        if (_typewriterTween != null) _typewriterTween.Kill();
+
+        _popupContentLabel.Visible = false;
+        _popupInfographic.Visible = false;
+        _popupSkillCard.Visible = true;
+
+        SkillCardData data = GetSkillCardData(skillCode);
+        _popupSkillTitle.Text = data.Title;
+        _popupSkillHotkey.Text = data.Hotkey;
+        _popupSkillBody.Text = data.Body;
+        _popupSkillCooldown.Text = data.Cooldown;
+
+        Texture2D iconTex = BuildCleanIconTexture(data.IconPath);
+        if (iconTex == null) iconTex = GD.Load<Texture2D>("res://icon.svg");
+        _popupSkillIcon.Texture = iconTex;
+
+        _popupSkillCard.Color = new Color(data.Accent.R * 0.10f, data.Accent.G * 0.10f, data.Accent.B * 0.16f, 0.97f);
+        if (_popupSkillCard.GetChild(0) is ReferenceRect border)
+        {
+            border.BorderColor = new Color(data.Accent.R, data.Accent.G, data.Accent.B, 0.95f);
+        }
+    }
+
+    private SkillCardData GetSkillCardData(string skillCode)
+    {
+        return skillCode switch
+        {
+            "J" => new SkillCardData(
+                "BƯỚC 3 • CHIÊU J: RÌU BAY",
+                "Bấm J hoặc phím 1",
+                "Ném rìu thần truy đuổi mục tiêu gần nhất. Mở giao tranh từ xa, an toàn và rất mượt cho người mới.",
+                "Hồi chiêu: 4 giây",
+                "res://Assets/Sprites/Player/Skill_1.png",
+                new Color(0.2f, 0.88f, 1f)
+            ),
+            "K" => new SkillCardData(
+                "CHIÊU K: LỐC XOÁY CẬN CHIẾN",
+                "Bấm K hoặc phím 2",
+                "Xoay liên hoàn trong vài giây, gây sát thương diện rộng. Dùng khi bị quây đông để dọn bãi nhanh.",
+                "Hồi chiêu: 6 giây",
+                "res://Assets/Sprites/Player/Skill_2.png",
+                new Color(1f, 0.45f, 0.25f)
+            ),
+            "L" => new SkillCardData(
+                "CHIÊU L: ĐỊA CHẤN",
+                "Bấm L hoặc phím 3",
+                "Nện đất gây nổ lực cực mạnh, khống chế khu vực rộng. Đây là skill kết liễu khi vào trận khó.",
+                "Hồi chiêu: 20 giây",
+                "res://Assets/Sprites/Player/Skill_3.png",
+                new Color(0.84f, 0.35f, 1f)
+            ),
+            _ => new SkillCardData(
+                "KỸ NĂNG MỚI",
+                "Hãy thử phím J/K/L",
+                "Chiêu thức mới đã sẵn sàng. Thử ngay để cảm nhận nhịp chiến đấu của Thạch Sanh.",
+                "",
+                "res://icon.svg",
+                new Color(0.7f, 0.8f, 1f)
+            )
+        };
+    }
+
+    private Texture2D BuildCleanIconTexture(string path)
+    {
         var tex = GD.Load<Texture2D>(path);
-        // Fallback sang .png nếu không có .jpg
-        if (tex == null) tex = GD.Load<Texture2D>(path.Replace(".jpg", ".png"));
+        if (tex == null) return null;
+
+        Image img = tex.GetImage();
+        if (img == null) return tex;
+
+        img.Decompress();
+        img.Convert(Image.Format.Rgba8);
+        Color bgColor = img.GetPixel(0, 0);
+
+        for (int y = 0; y < img.GetHeight(); y++)
+        {
+            for (int x = 0; x < img.GetWidth(); x++)
+            {
+                Color p = img.GetPixel(x, y);
+                float diff = Mathf.Sqrt(
+                    Mathf.Pow(p.R - bgColor.R, 2) +
+                    Mathf.Pow(p.G - bgColor.G, 2) +
+                    Mathf.Pow(p.B - bgColor.B, 2)
+                );
+
+                if (diff < 0.18f)
+                {
+                    img.SetPixel(x, y, new Color(0, 0, 0, 0));
+                }
+            }
+        }
+
+        return ImageTexture.CreateFromImage(img);
 
         if (tex != null)
         {
@@ -617,7 +769,7 @@ public partial class TreasureChest : Area2D
         }
 
         int maxSlides = 0;
-        if (GameManager.Instance.CurrentLevel == 1) maxSlides = 5;
+        if (GameManager.Instance.CurrentLevel == 1) maxSlides = 3;
         else if (GameManager.Instance.CurrentLevel == 2) maxSlides = 1;
 
         _popupSlide++;
