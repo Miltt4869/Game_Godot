@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public partial class BaseEnemy : CharacterBody2D
 {
+    // helper for cliff detection using TestMove instead of raycast
     // Stats
     [Export] public int MaxHealth = 50;
     [Export] public int AttackDamage = 10;
@@ -218,6 +219,13 @@ public partial class BaseEnemy : CharacterBody2D
                     velocity.X = PatrolDirection * MoveSpeed;
                 }
 
+                // avoid walking off edges
+                if (IsCliffAhead())
+                {
+                    PatrolDirection *= -1;
+                    velocity.X = PatrolDirection * MoveSpeed;
+                }
+
                 SetFacingDirection(PatrolDirection < 0);
                 AnimSprite.Play("walk");
                 break;
@@ -237,7 +245,17 @@ public partial class BaseEnemy : CharacterBody2D
 
                     float dist = GlobalPosition.DistanceTo(TargetPlayer.GlobalPosition);
 
-                    if (dist <= AttackRange)
+                    // if chasing would send us off a ledge, stop and reverse instead of falling
+                    float chaseDir = TargetPlayer.GlobalPosition.X > GlobalPosition.X ? 1f : -1f;
+                    if (IsCliffAhead(chaseDir))
+                    {
+                        // chaseDir is float, but PatrolDirection is int (-1 or 1)
+                        PatrolDirection = chaseDir < 0 ? 1 : -1; // reverse compared to chase direction
+                        velocity.X = chaseDir * -1 * MoveSpeed * 0.5f;
+                        SetFacingDirection(chaseDir < 0);
+                        AnimSprite.Play("walk");
+                    }
+                    else if (dist <= AttackRange)
                     {
                         velocity.X = 0; // Đứng yên để đánh
                         if (CanAttackPlayer)
@@ -433,6 +451,25 @@ public partial class BaseEnemy : CharacterBody2D
             attackPos.X = sign * Math.Abs(attackPos.X);
             AttackArea.Position = attackPos;
         }
+    }
+
+    /// <summary>
+    /// Simple raycast check to see if there is floor a short distance ahead of the enemy.
+    /// Used to prevent patrol/chase logic from walking enemies off cliffs.
+    /// </summary>
+    /// <returns>True if there is no ground a step ahead (i.e. a cliff).</returns>
+    /// <summary>
+    /// Check for absence of floor in the given direction (or current patrol direction if omitted).
+    /// Uses TestMove with a small forward+downward motion to see if the body would hit anything.
+    /// </summary>
+    /// <param name="direction">Direction to look ahead: 1 = right, -1 = left. If NaN, uses PatrolDirection.</param>
+    /// <returns>True if moving a step ahead+down would result in no collision (i.e. a cliff).</returns>
+    protected bool IsCliffAhead(float direction = float.NaN)
+    {
+        float dir = float.IsNaN(direction) ? PatrolDirection : direction;
+        Vector2 checkMotion = new Vector2(dir * 16f, 24f);
+        // if TestMove returns false, the body would not hit anything, meaning there's no floor
+        return !TestMove(GlobalTransform, checkMotion);
     }
 
     protected virtual void CreateAttackVFX()

@@ -543,23 +543,22 @@ public partial class TreasureChest : Area2D
 
         UpdatePopupText();
 
-        var timer = GetTree().CreateTimer(0.6);
-        timer.Timeout += () =>
+        // immediately add input listeners so player can press keys or click at any moment
+        var listener = new Control();
+        listener.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        _popupOverlay.AddChild(listener);
+        listener.GuiInput += (ev) =>
         {
-            if (!IsInstanceValid(_popupOverlay)) return;
-
-            var listener = new Control();
-            listener.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-            _popupOverlay.AddChild(listener);
-            listener.GuiInput += (ev) =>
+            if (ev is InputEventMouseButton mb && mb.Pressed)
             {
-                if (ev is InputEventMouseButton mb && mb.Pressed) OnNextSlide();
-            };
-
-            var keyHandler = new Node();
-            keyHandler.SetScript(GD.Load<Script>("res://Scripts/NPCs/PopupInputHelper.cs") ?? null);
-            _popupOverlay.AddChild(keyHandler);
+                if (!IsInstanceValid(this)) return;
+                OnNextSlide();
+            }
         };
+
+        var keyHandler = new Node();
+        keyHandler.SetScript(GD.Load<Script>("res://Scripts/NPCs/PopupInputHelper.cs") ?? null);
+        _popupOverlay.AddChild(keyHandler);
     }
 
     private void UpdatePopupText()
@@ -929,6 +928,9 @@ public partial class TreasureChest : Area2D
 
     public void OnNextSlide()
     {
+        // guard against disposed objects
+        if (!IsInstanceValid(this) || _popupOverlay == null || !IsInstanceValid(_popupOverlay)) return;
+
         // Nếu đang đánh máy mà nhấn phím thì hiện hết chữ luôn
         if (_isTypewriting)
         {

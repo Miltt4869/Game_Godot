@@ -49,6 +49,8 @@ public partial class Player : CharacterBody2D
     private bool _isDead = false;
     private bool _isHurt = false;
     private bool _deathSignalSent = false;
+    // Invulnerability (used briefly after respawning)
+    private bool _isInvulnerable = false;
 
     // Components
     private AnimatedSprite2D _animatedSprite;
@@ -483,7 +485,8 @@ public partial class Player : CharacterBody2D
     public void TakeDamage(int damage)
     {
         if (GameManager.Instance != null && GameManager.Instance.IsTutorialRunning) return;
-        if (_isDead || _isHurt) return;
+        // ignore incoming damage while temporarily invulnerable (such as right after a respawn)
+        if (_isDead || _isHurt || _isInvulnerable) return;
 
         _health -= damage;
         GameManager.Instance.PlayerHealth = _health;
@@ -588,6 +591,32 @@ public partial class Player : CharacterBody2D
 
         PlayAnimationIfNotPlaying("idle");
         EmitSignal(SignalName.HealthChanged, _health, GameManager.Instance.MaxPlayerHealth);
+
+        // Brief invulnerability after respawn so the player isn't killed instantly by nearby hazards
+        StartInvulnerability(1.0f);
+    }
+
+    /// <summary>
+    /// Begin a short period where incoming damage is ignored.
+    /// Also flashes the player sprite to give visual feedback.
+    /// </summary>
+    /// <param name="duration">How long the invulnerability should last, in seconds.</param>
+    public void StartInvulnerability(float duration = 1f)
+    {
+        _isInvulnerable = true;
+
+        // flash effect (semi-transparent) for the duration
+        var tw = CreateTween();
+        tw.SetParallel();
+        tw.TweenProperty(_animatedSprite, "modulate", new Color(1,1,1,0.5f), duration * 0.5f).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+        tw.Chain().TweenProperty(_animatedSprite, "modulate", Colors.White, duration * 0.5f).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+
+        var timer = GetTree().CreateTimer(duration);
+        timer.Timeout += () =>
+        {
+            _isInvulnerable = false;
+            _animatedSprite.Modulate = Colors.White;
+        };
     }
 
     public void WalkIntoCave(float direction = 1f)

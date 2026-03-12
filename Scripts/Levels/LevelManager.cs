@@ -171,6 +171,11 @@ public partial class LevelManager : Node2D
 
             // 2. Reset trạng thái nhân vật (Máu, sống lại) thông qua call method trong Player.cs
             _player.Call("FastReset");
+            // Double-check: give a brief invulnerability window from level manager as well.
+            if (_player.HasMethod("StartInvulnerability"))
+            {
+                _player.Call("StartInvulnerability", 1.0f);
+            }
 
             GD.Print("Đã hồi sinh nhanh tại chỗ!");
         }

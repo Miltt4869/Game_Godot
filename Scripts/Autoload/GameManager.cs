@@ -29,6 +29,8 @@ public partial class GameManager : Node
     private Label _respawnLabel; // Label hồi sinh
     private ProgressBar _loadingBar;
     private bool _isTransitioning = false;
+    // Flag used to prevent GameOver being processed multiple times concurrently
+    private bool _gameOverInProgress = false;
 
     private readonly string[] _levelPaths = {
         "res://Scenes/Levels/Level1.tscn",
@@ -205,9 +207,26 @@ public partial class GameManager : Node
     }
     public async void GameOver()
     {
+        // prevent reentry
+        if (_gameOverInProgress)
+        {
+            GD.Print("[GameManager] GameOver called again while already processing, ignoring.");
+            return;
+        }
+        _gameOverInProgress = true;
+
+        GD.Print($"[GameManager] GameOver called. Lives before processing: {PlayerLives}");
         Engine.TimeScale = 1.0f;
         IsPaused = false;
         GetTree().Paused = false;
+
+        // guard: if we've already entered a game-over/respawn flow, ignore extra calls
+        if (_isTransitioning)
+        {
+            GD.Print("[GameManager] GameOver ignored because transition is already in progress.");
+            _gameOverInProgress = false;
+            return;
+        }
 
         if (PlayerLives > 1)
         {
@@ -216,6 +235,7 @@ public partial class GameManager : Node
             CurrentCheckpointIndex = 0; // Reset checkpoint về 0 để quay lại đầu map
             await ShowRespawnSequence();
             // Lệnh hồi sinh được gọi ngay ở cuối ShowRespawnSequence
+            _gameOverInProgress = false;
         }
         else
         {
@@ -223,6 +243,7 @@ public partial class GameManager : Node
             IsGameOver = true;
             PlayerLives = 3; // Reset lại mạng cho lần chơi sau
             ChangeSceneWithTransition("res://Scenes/Main/GameOver.tscn", false);
+            _gameOverInProgress = false;
         }
     }
 
@@ -253,6 +274,7 @@ public partial class GameManager : Node
         twHide.TweenProperty(_transitionRect, "color:a", 0.0f, 0.4f);
         await ToSignal(twHide, "finished");
         _isTransitioning = false;
+        _gameOverInProgress = false; // clear flag after respawn flow finished
     }
 
     public void WinGame() => ChangeSceneWithTransition("res://Scenes/Main/WinScreen.tscn", false);
